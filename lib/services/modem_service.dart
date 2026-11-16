@@ -198,9 +198,7 @@ class ModemService {
       final upper = result.toUpperCase();
       if (waitForPrompt && result.contains('>')) break;
       if (waitForUssd) {
-        if (upper.contains('+CUSD:') ||
-            upper.contains('+CME ERROR') ||
-            upper.contains('ERROR')) {
+        if (upper.contains('+CUSD:') || _isModemError(result)) {
           // Wait for a brief quiet period to allow the rest of a multiline reply.
           if (quietAfterData >= 2) break;
         }
@@ -302,6 +300,12 @@ class ModemService {
     return false;
   });
 
+  static bool _isModemError(String response) {
+    final upper = response.toUpperCase();
+    return upper.contains('+CME ERROR') ||
+        RegExp(r'(^|\n)\s*ERROR\s*($|\r)').hasMatch(upper);
+  }
+
   Future<String> sendUssd(
     String code, {
     int dcs = 15,
@@ -312,28 +316,59 @@ class ModemService {
     if (code.trim().isEmpty) throw ArgumentError('USSD-код не задан.');
     _busy = true;
     try {
-      final escaped = code.trim().replaceAll('"', '');
-      final response = await _writeAndRead(
-        'AT+CUSD=1,"$escaped",$dcs',
-        timeout: timeout,
-        waitForUssd: true,
-      );
-      final upper = response.toUpperCase();
-      if (upper.contains('ERROR')) {
-        throw StateError('Модем отклонил команду AT+CUSD на порту ${_portName ?? 'неизвестно'}. '
-            'Проверьте выбранный AT-порт. Ответ модема: $response');
+      final plain = code.trim().replaceAll('"', '');
+
+      // Закрываем возможную «зависшую» USSD-сессию, иначе E173 отвечает ERROR
+      // или молча игнорирует новый запрос.
+      await _writeAndRead('AT+CUSD=2', timeout: const Duration(seconds: 3));
+      // Стандартный набор символов GSM для строки запроса.
+      await _writeAndRead('AT+CSCS="GSM"', timeout: const Duration(seconds: 3));
+
+      // Варианты запроса: сначала обычный текст, затем 7-bit hex (формат,
+      // который E173 чаще всего ожидает), затем UCS-2 hex.
+      final attempts = <String>[
+        'AT+CUSD=1,"$plain",$dcs',
+        if (dcs != 15) 'AT+CUSD=1,"$plain",15',
+      ];
+      try {
+        attempts.add('AT+CUSD=1,"${UssdCodec.encodeGsm7PackedHex(plain)}",15');
+      } catch (_) {
+        // Код с нестандартными символами — hex-вариант пропускаем.
       }
-      if (response.isEmpty) {
-        throw StateError('Модем не ответил на команду USSD за ${timeout.inSeconds} с.');
+
+      final errors = <String>[];
+      for (final command in attempts) {
+        final response = await _writeAndRead(
+          command,
+          timeout: timeout,
+          waitForUssd: true,
+        );
+        if (response.contains('+CUSD:')) {
+          final decoded = UssdCodec.decodeHuaweiResponse(response);
+          if (decoded.startsWith('Ошибка USSD')) {
+            errors.add('$command → $response');
+            // Сеть ответила — повторять в другом формате бессмысленно.
+            throw StateError('$decoded\nОтвет модема: $response');
+          }
+          return decoded;
+        }
+        if (_isModemError(response)) {
+          errors.add('$command → $response');
+          await _writeAndRead('AT+CUSD=2', timeout: const Duration(seconds: 3));
+          continue; // пробуем следующий формат
+        }
+        if (response.isEmpty) {
+          throw StateError(
+              'Модем не ответил на USSD за ${timeout.inSeconds} с (порт ${_portName ?? '?'}). '
+              'Если это порт «Modem» — переключитесь на «3G PC UI Interface».');
+        }
+        throw StateError(
+            'Модем принял команду, но сеть не прислала +CUSD за ${timeout.inSeconds} с.\n'
+            'Порт: ${_portName ?? 'неизвестно'}. Ответ: $response\n'
+            'Ответ мог прийти на другой COM-порт модема — попробуйте другой порт.');
       }
-      if (!response.contains('+CUSD:')) {
-        throw StateError('Модем принял команду, но не прислал сетевой ответ +CUSD. '
-            'Порт: ${_portName ?? 'неизвестно'}. Ответ: $response');
-      }
-      final decoded = UssdCodec.decodeHuaweiResponse(response);
-      if (decoded.startsWith('Ошибка USSD')) throw StateError(decoded);
-      if (decoded == response && !response.contains('+CUSD:')) return response;
-      return decoded;
+      throw StateError('Модем отклонил все варианты AT+CUSD на порту ${_portName ?? 'неизвестно'}:\n'
+          '${errors.join('\n')}');
     } finally {
       _busy = false;
     }

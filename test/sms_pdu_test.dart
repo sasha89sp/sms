@@ -71,5 +71,22 @@ void main() {
         startsWith('Ошибка USSD'),
       );
     });
+
+    test('encodes USSD request to packed 7-bit hex', () {
+      expect(UssdCodec.encodeGsm7PackedHex('*100#'), 'AA180C3602');
+      expect(UssdCodec.decodeGsm7PackedHex('AA180C3602'), '*100#');
+    });
+
+    test('decodes packed 7-bit hex reply (not mistaken for UCS-2)', () {
+      final hex = UssdCodec.encodeGsm7PackedHex('Balance 123.45 rub');
+      expect(hex.length % 4, 0);
+      expect(UssdCodec.decodeHuaweiResponse('+CUSD: 0,"$hex",15'),
+          'Balance 123.45 rub');
+    });
+
+    test('plain text reply is returned as is', () {
+      expect(UssdCodec.decodeHuaweiResponse('+CUSD: 0,"Balance: 50.2 rub",15'),
+          'Balance: 50.2 rub');
+    });
   });
 }
