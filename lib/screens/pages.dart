@@ -235,7 +235,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             .map((port) => DropdownMenuItem(
                                   value: port.name,
                                   child: Text(
-                                    '${port.name}${port.looksLikeHuawei ? ' · Huawei' : ''}',
+                                    '${port.name}${port.isPcUiInterface ? ' · PC UI (рекомендуется)' : port.friendlyName.isNotEmpty ? ' · ${port.friendlyName}' : port.looksLikeHuawei ? ' · Huawei' : ''}',
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ))
@@ -273,7 +273,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 if (c.availablePorts.isNotEmpty) ...[
                   const SizedBox(height: 10),
                   Text(
-                    'Найдено COM-портов: ${c.availablePorts.length}. Автопоиск проверяет AT-ответ, а не выбирает первый порт.',
+                    'Найдено COM-портов: ${c.availablePorts.length}. Автопоиск сначала проверяет Huawei PC UI — основной AT-интерфейс.',
                     style: const TextStyle(color: _muted, fontSize: 10),
                   ),
                 ],

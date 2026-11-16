@@ -40,10 +40,9 @@ class ModemService {
     }
     final ports = result.values.toList();
     ports.sort((a, b) {
-      if (a.looksLikeHuawei != b.looksLikeHuawei) {
-        return a.looksLikeHuawei ? -1 : 1;
-      }
-      return a.name.compareTo(b.name);
+      final role = a.autoConnectPriority.compareTo(b.autoConnectPriority);
+      if (role != 0) return role;
+      return _compareComNames(a.name, b.name);
     });
     return ports;
   }
@@ -56,16 +55,19 @@ class ModemService {
       return ModemPortInfo(name: _portName ?? '', friendlyName: 'Уже подключён');
     }
     final ports = listPorts();
-    if (preferredPort.isNotEmpty) {
-      ports.sort((a, b) {
+    // Port role is more important than a previously saved generic port:
+    // E173's PC UI interface (COM22 in the user's setup) must be tried before
+    // the modem/application interfaces. Within the same role, keep the saved
+    // preference first.
+    ports.sort((a, b) {
+      final role = a.autoConnectPriority.compareTo(b.autoConnectPriority);
+      if (role != 0) return role;
+      if (preferredPort.isNotEmpty) {
         if (a.name == preferredPort) return -1;
         if (b.name == preferredPort) return 1;
-        if (a.looksLikeHuawei != b.looksLikeHuawei) {
-          return a.looksLikeHuawei ? -1 : 1;
-        }
-        return a.name.compareTo(b.name);
-      });
-    }
+      }
+      return _compareComNames(a.name, b.name);
+    });
     for (final candidate in ports) {
       try {
         final recognized = await connectToPort(
@@ -316,8 +318,17 @@ class ModemService {
         timeout: timeout,
         waitForUssd: true,
       );
-      if (response.isEmpty || response.toUpperCase().contains('ERROR')) {
-        throw StateError('Сеть не вернула ответ USSD. Ответ модема: $response');
+      final upper = response.toUpperCase();
+      if (upper.contains('ERROR')) {
+        throw StateError('Модем отклонил команду AT+CUSD на порту ${_portName ?? 'неизвестно'}. '
+            'Проверьте выбранный AT-порт. Ответ модема: $response');
+      }
+      if (response.isEmpty) {
+        throw StateError('Модем не ответил на команду USSD за ${timeout.inSeconds} с.');
+      }
+      if (!response.contains('+CUSD:')) {
+        throw StateError('Модем принял команду, но не прислал сетевой ответ +CUSD. '
+            'Порт: ${_portName ?? 'неизвестно'}. Ответ: $response');
       }
       final decoded = UssdCodec.decodeHuaweiResponse(response);
       if (decoded.startsWith('Ошибка USSD')) throw StateError(decoded);
@@ -487,6 +498,15 @@ class ModemService {
     if (response.toUpperCase().contains('SIM PUK')) return 'Требуется PUK-код';
     if (response.toUpperCase().contains('NOT INSERTED')) return 'SIM не обнаружена';
     return response.trim().isEmpty ? 'Нет ответа' : response.trim();
+  }
+
+  int _compareComNames(String a, String b) {
+    final aNumber = int.tryParse(RegExp(r'COM(\d+)', caseSensitive: false)
+            .firstMatch(a)?.group(1) ?? '');
+    final bNumber = int.tryParse(RegExp(r'COM(\d+)', caseSensitive: false)
+            .firstMatch(b)?.group(1) ?? '');
+    if (aNumber != null && bNumber != null) return aNumber.compareTo(bNumber);
+    return a.compareTo(b);
   }
 
   void _ensureConnected() {
