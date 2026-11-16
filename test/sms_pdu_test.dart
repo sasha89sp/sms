@@ -24,12 +24,23 @@ void main() {
         reference: 0x5A,
       );
 
-      expect(parts.length, greaterThan(1));
-      expect(parts.first.pdu.contains('0500035A'), isTrue);
+      // 140 UCS-2 code units require three concatenated messages:
+      // 67 + 67 + 6 code units. The 6-byte concatenation UDH is part
+      // of TP-UD, whose maximum size is 140 octets. The complete PDU is
+      // longer than 140 bytes because it also contains the SMSC/TPDU
+      // addressing and control fields.
+      expect(parts, hasLength(3));
+      expect(parts.first.pdu.contains('0500035A0301'), isTrue);
+      expect(parts[1].pdu.contains('0500035A0302'), isTrue);
+      expect(parts[2].pdu.contains('0500035A0303'), isTrue);
       for (final part in parts) {
-        expect(part.pdu.length ~/ 2, lessThanOrEqualTo(141));
-        expect(part.tpduLength, part.pdu.length ~/ 2 - 1);
+        final bytes = part.pdu.length ~/ 2;
+        final userDataLength = int.parse(part.pdu.substring(26, 28), radix: 16);
+        expect(userDataLength, lessThanOrEqualTo(140));
+        expect(part.tpduLength, bytes - 1);
       }
+      expect(int.parse(parts.first.pdu.substring(26, 28), radix: 16), 140);
+      expect(int.parse(parts[1].pdu.substring(26, 28), radix: 16), 140);
     });
 
     test('rejects invalid recipient', () {
