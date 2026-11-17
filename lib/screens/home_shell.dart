@@ -16,12 +16,12 @@ class _HomeShellState extends State<HomeShell> {
 
   static const _navigation = <_NavigationItem>[
     _NavigationItem('Обзор', Icons.dashboard_rounded),
-    _NavigationItem('Автоматизация', Icons.account_tree_rounded),
+    _NavigationItem('Сценарии', Icons.account_tree_rounded),
     _NavigationItem('SMS', Icons.mark_email_unread_rounded),
     _NavigationItem('Вызовы', Icons.call_rounded),
     _NavigationItem('Контакты', Icons.contacts_rounded),
     _NavigationItem('Статистика', Icons.network_check_rounded),
-    _NavigationItem('Баланс', Icons.account_balance_wallet_rounded),
+    _NavigationItem('USSD и баланс', Icons.account_balance_wallet_rounded),
     _NavigationItem('Журнал', Icons.receipt_long_rounded),
     _NavigationItem('AT-терминал', Icons.terminal_rounded),
     _NavigationItem('Настройки', Icons.settings_rounded),
@@ -32,7 +32,7 @@ class _HomeShellState extends State<HomeShell> {
       case 0:
         return DashboardPage(onNavigate: (value) => setState(() => _selectedIndex = value));
       case 1:
-        return AutomationPage();
+        return ScenariosPage();
       case 2:
         return SmsPage();
       case 3:
@@ -42,7 +42,7 @@ class _HomeShellState extends State<HomeShell> {
       case 5:
         return StatisticsPage();
       case 6:
-        return BalancePage();
+        return UssdPage();
       case 7:
         return LogsPage();
       case 8:
@@ -152,6 +152,22 @@ class _HomeShellState extends State<HomeShell> {
                                       fontWeight:
                                           active ? FontWeight.w600 : FontWeight.w400,
                                     )),
+                                if (index == 2 && controller.unreadSms > 0) ...[
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 7, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF2E7BE6),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text('${controller.unreadSms}',
+                                        style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w700)),
+                                  ),
+                                ],
                               ],
                             ),
                           ),
@@ -210,7 +226,7 @@ class _HomeShellState extends State<HomeShell> {
                 ),
                 const Padding(
                   padding: EdgeInsets.only(bottom: 15),
-                  child: Text('Версия 1.0.0',
+                  child: Text('Версия 2.0.0',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Color(0xFF667990), fontSize: 10)),
                 ),

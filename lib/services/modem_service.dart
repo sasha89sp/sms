@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:serial_port_win32/serial_port_win32.dart';
 
 import '../models/modem_info.dart';
-import '../models/sms_item.dart';
+import '../models/call_info.dart';
 import 'sms_pdu.dart';
 import 'ussd_codec.dart';
 
@@ -13,7 +13,72 @@ class ModemService {
   String? _portName;
   bool _busy = false;
 
+  // Нештатные сообщения модема (URC), замеченные при чтении порта.
+  bool _smsHint = false;
+  bool _ringing = false;
+  String _incomingNumber = '';
+  bool _callEndedHint = false;
+
   bool get isConnected => _port?.isOpened ?? false;
+
+  /// Модем сообщил (+CMTI) о новом SMS.
+  bool takeSmsHint() {
+    final value = _smsHint;
+    _smsHint = false;
+    return value;
+  }
+
+  bool get isRinging => _ringing;
+  String get incomingNumber => _incomingNumber;
+
+  bool takeCallEndedHint() {
+    final value = _callEndedHint;
+    _callEndedHint = false;
+    return value;
+  }
+
+  void clearRinging() {
+    _ringing = false;
+    _incomingNumber = '';
+  }
+
+  /// Быстрый список имён COM-портов (без обращения к SetupAPI).
+  List<String> quickPortNames() {
+    try {
+      return SerialPort.getAvailablePorts();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// Пока порт модема есть в системе. При ошибке опроса считаем, что есть.
+  bool isPortPresent() {
+    final name = _portName;
+    if (name == null) return false;
+    try {
+      return SerialPort.getAvailablePorts().contains(name);
+    } catch (_) {
+      return true;
+    }
+  }
+
+  /// Мгновенно «отпускает» порт после извлечения модема из USB.
+  /// Все ожидающие операции получают ошибку и завершаются.
+  void forceDisconnect() {
+    final current = _port;
+    _port = null;
+    _portName = null;
+    _busy = false;
+    _ringing = false;
+    _incomingNumber = '';
+    if (current != null) {
+      try {
+        if (current.isOpened) current.close();
+      } catch (_) {
+        // Порт уже недоступен.
+      }
+    }
+  }
   bool get isBusy => _busy;
   String? get connectedPort => _portName;
 
@@ -176,12 +241,14 @@ class ModemService {
     required Duration timeout,
     bool waitForUssd = false,
     bool waitForPrompt = false,
+    bool waitForSmsAck = false,
   }) async {
     final port = _port!;
     final stopwatch = Stopwatch()..start();
     final buffer = StringBuffer();
     var quietAfterData = 0;
     while (stopwatch.elapsed < timeout) {
+      if (_port == null) throw StateError('Модем отключён.');
       final remaining = timeout - stopwatch.elapsed;
       final waitMs = remaining.inMilliseconds.clamp(30, 220).toInt();
       final bytes = await port.readBytes(
@@ -189,7 +256,9 @@ class ModemService {
         timeout: Duration(milliseconds: waitMs),
       );
       if (bytes.isNotEmpty) {
-        buffer.write(latin1.decode(bytes, allowInvalid: true));
+        final chunk = latin1.decode(bytes, allowInvalid: true);
+        _scanUrc(chunk);
+        buffer.write(chunk);
         quietAfterData = 0;
       } else if (buffer.isNotEmpty) {
         quietAfterData++;
@@ -197,6 +266,16 @@ class ModemService {
       final result = buffer.toString();
       final upper = result.toUpperCase();
       if (waitForPrompt && result.contains('>')) break;
+      if (waitForSmsAck) {
+        // Подтверждение отправки приходит как "+CMGS: N" и "OK" спустя секунды;
+        // служебные строки (^RSSI и т. п.) игнорируем.
+        if (_isModemError(result) || upper.contains('+CMS ERROR')) break;
+        if (upper.contains('+CMGS:') &&
+            (upper.contains('OK') || quietAfterData >= 3)) {
+          break;
+        }
+        continue;
+      }
       if (waitForUssd) {
         if (upper.contains('+CUSD:') || _isModemError(result)) {
           // Wait for a brief quiet period to allow the rest of a multiline reply.
@@ -227,6 +306,7 @@ class ModemService {
           timeout: const Duration(milliseconds: 30),
         );
         if (bytes.isEmpty) break;
+        _scanUrc(latin1.decode(bytes, allowInvalid: true));
       } catch (_) {
         break;
       }
@@ -303,7 +383,7 @@ class ModemService {
   static bool _isModemError(String response) {
     final upper = response.toUpperCase();
     return upper.contains('+CME ERROR') ||
-        RegExp(r'(^|\n)\s*ERROR\s*($|\r)').hasMatch(upper);
+        RegExp(r'^\s*ERROR\s*$', multiLine: true).hasMatch(upper);
   }
 
   Future<String> sendUssd(
@@ -409,10 +489,12 @@ class ModemService {
           stringConverter: StringConverter.nativeUtf8,
         );
         final response = await _readResponse(
-          timeout: const Duration(seconds: 35),
+          timeout: const Duration(seconds: 40),
+          waitForSmsAck: true,
         );
         if (!response.toUpperCase().contains('+CMGS:') ||
-            response.toUpperCase().contains('ERROR')) {
+            _isModemError(response) ||
+            response.toUpperCase().contains('+CMS ERROR')) {
           throw StateError('Ошибка отправки SMS: $response');
         }
         confirmations.add(response);
@@ -423,38 +505,59 @@ class ModemService {
     }
   }
 
-  Future<List<SmsItem>> readSms() => _exclusive(() async {
-    final mode = await _writeAndRead('AT+CMGF=1');
-    if (mode.toUpperCase().contains('ERROR')) {
-      throw StateError('Модем не поддержал текстовый режим чтения SMS.');
+  /// Читает все SMS из памяти модема (SIM и память модема) в PDU-режиме.
+  Future<List<RawSms>> readSmsPdu() => _exclusive(() async {
+    final result = <RawSms>[];
+    final mode = await _writeAndRead('AT+CMGF=0');
+    if (_isModemError(mode)) {
+      throw StateError('Модем не поддержал PDU-режим SMS.');
     }
-    final response = await _writeAndRead(
-      'AT+CMGL="ALL"',
-      timeout: const Duration(seconds: 25),
-    );
-    final items = <SmsItem>[];
-    final lines = response.split(RegExp(r'\r?\n'));
-    for (var i = 0; i < lines.length; i++) {
-      final header = RegExp(
-        r'^\+CMGL:\s*(\d+)\s*,\s*"([^"]*)"\s*,\s*"?([^",]*)"?(?:,.*)?$',
-      ).firstMatch(lines[i].trim());
-      if (header == null) continue;
-      final body = i + 1 < lines.length ? lines[i + 1].trim() : '';
-      final timestamp = RegExp(r'\d{2}/\d{2}/\d{2},\d{2}:\d{2}:\d{2}(?:[+-]\d{2})?')
-          .firstMatch(lines[i])
-          ?.group(0) ?? '';
-      items.add(SmsItem(
-        index: int.tryParse(header.group(1) ?? '') ?? 0,
-        status: header.group(2) ?? '',
-        sender: header.group(3) ?? '',
-        timestamp: timestamp,
-        body: body,
-      ));
+    for (final storage in const ['SM', 'ME']) {
+      final select = await _writeAndRead(
+        'AT+CPMS="$storage"',
+        timeout: const Duration(seconds: 5),
+      );
+      if (!select.toUpperCase().contains('+CPMS:')) continue;
+      final response = await _writeAndRead(
+        'AT+CMGL=4',
+        timeout: const Duration(seconds: 25),
+      );
+      final lines = response.split(RegExp(r'\r?\n'));
+      for (var i = 0; i < lines.length; i++) {
+        final header =
+            RegExp(r'^\+CMGL:\s*(\d+)\s*,\s*(\d+)').firstMatch(lines[i].trim());
+        if (header == null) continue;
+        var j = i + 1;
+        while (j < lines.length && lines[j].trim().isEmpty) {
+          j++;
+        }
+        if (j >= lines.length) break;
+        final pdu = lines[j].trim();
+        if (!RegExp(r'^[0-9A-Fa-f]+$').hasMatch(pdu)) continue;
+        result.add(RawSms(
+          storage: storage,
+          index: int.tryParse(header.group(1) ?? '') ?? 0,
+          stat: int.tryParse(header.group(2) ?? '') ?? 1,
+          pdu: pdu,
+        ));
+        i = j;
+      }
     }
-    return items;
+    // Возвращаем память по умолчанию.
+    await _writeAndRead('AT+CPMS="SM"', timeout: const Duration(seconds: 3));
+    return result;
   });
 
-  Future<String> deleteSms(int index) => sendAt('AT+CMGD=$index');
+  /// Удаляет SMS из памяти модема. [ref] имеет вид "SM:3".
+  Future<void> deleteSmsFromModem(Iterable<String> refs) => _exclusive(() async {
+    for (final ref in refs) {
+      final parts = ref.split(':');
+      if (parts.length != 2) continue;
+      await _writeAndRead('AT+CPMS="${parts[0]}"', timeout: const Duration(seconds: 3));
+      await _writeAndRead('AT+CMGD=${parts[1]}', timeout: const Duration(seconds: 5));
+    }
+    await _writeAndRead('AT+CPMS="SM"', timeout: const Duration(seconds: 3));
+  });
 
   Future<String> readContacts({int first = 1, int last = 250}) => _exclusive(() async {
     await _writeAndRead('AT+CPBS="SM"');
@@ -495,16 +598,128 @@ class ModemService {
     });
   }
 
+  /// Подготовка модема: уведомления о SMS, АОН, голос. Ошибки игнорируются.
+  Future<String> prepareFeatures() => _exclusive(() async {
+    final log = StringBuffer();
+    Future<void> run(String command) async {
+      try {
+        final answer =
+            await _writeAndRead(command, timeout: const Duration(seconds: 3));
+        log.writeln('$command → ${answer.replaceAll(RegExp(r'\s+'), ' ')}');
+      } catch (error) {
+        log.writeln('$command → $error');
+      }
+    }
+
+    await run('AT+CMGF=0');
+    await run('AT+CNMI=2,1,0,0,0');
+    await run('AT+CLIP=1');
+    await run('AT+CRC=1');
+    await run('AT^CVOICE?');
+    return log.toString().trim();
+  });
+
+  /// Включает голосовой режим (PCM по USB), если он выключен.
+  Future<String> enableVoice() => _exclusive(() async {
+    final state = await _writeAndRead('AT^CVOICE?', timeout: const Duration(seconds: 3));
+    if (RegExp(r'\^CVOICE:\s*0').hasMatch(state)) return state;
+    final answer = await _writeAndRead('AT^CVOICE=0', timeout: const Duration(seconds: 3));
+    return '$state\n$answer';
+  });
+
+  static String _cleanDialString(String value) =>
+      value.replaceAll(RegExp(r'[^0-9+*#pPwW,]'), '');
+
+  /// Набирает номер (голосовой вызов).
   Future<String> dial(String number) async {
-    if (number.trim().isEmpty) throw ArgumentError('Введите номер телефона.');
-    return sendAt('ATD${number.trim()};', timeout: const Duration(seconds: 8));
+    final clean = _cleanDialString(number);
+    if (clean.isEmpty) throw ArgumentError('Введите номер телефона.');
+    final answer = await sendAt('ATD$clean;', timeout: const Duration(seconds: 10));
+    if (_isModemError(answer)) {
+      throw StateError('Модем не смог начать вызов: $answer');
+    }
+    return answer;
   }
 
-  Future<String> hangUp() => sendAt('ATH', timeout: const Duration(seconds: 5));
+  /// Направляет звук вызова в USB (PCM по отдельному COM-порту).
+  Future<String> routeAudioToUsb() =>
+      sendAt('AT^DDSETEX=2', timeout: const Duration(seconds: 3));
+
+  Future<String> hangUp() async {
+    final first = await sendAt('ATH', timeout: const Duration(seconds: 5));
+    if (_isModemError(first)) {
+      return sendAt('AT+CHUP', timeout: const Duration(seconds: 5));
+    }
+    return first;
+  }
+
+  Future<String> answerCall() =>
+      sendAt('ATA', timeout: const Duration(seconds: 8));
+
+  /// Отправляет DTMF-цифры во время разговора.
+  Future<String> sendDtmf(String digits) => _exclusive(() async {
+    final out = StringBuffer();
+    for (final rune in digits.runes) {
+      final ch = String.fromCharCode(rune);
+      if (!RegExp(r'^[0-9*#A-Da-d]$').hasMatch(ch)) continue;
+      final answer = await _writeAndRead('AT+VTS=$ch', timeout: const Duration(seconds: 3));
+      out.writeln('$ch → ${answer.replaceAll(RegExp(r'\s+'), ' ')}');
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+    }
+    return out.toString().trim();
+  });
 
   Future<String> listCalls() =>
       sendAt('AT+CLCC', timeout: const Duration(seconds: 5));
 
+  Future<List<CallLine>> currentCalls() async =>
+      CallLine.parse(await listCalls());
+
+  /// Идентификатор SIM-карты: ICCID, иначе IMSI.
+  Future<String> readSimId() => _exclusive(() async {
+    for (final command in const ['AT+CCID', 'AT^ICCID?', 'AT+CIMI']) {
+      try {
+        final answer = await _writeAndRead(command, timeout: const Duration(seconds: 3));
+        if (_isModemError(answer)) continue;
+        final match = RegExp(r'\d{15,22}').firstMatch(answer);
+        if (match != null) return match.group(0)!;
+      } catch (_) {
+        // пробуем следующую команду
+      }
+    }
+    return '';
+  });
+
+  /// Считывает «лишние» данные порта, чтобы заметить RING / +CMTI в простое.
+  Future<void> pollUrc() async {
+    if (!isConnected || _busy) return;
+    _busy = true;
+    try {
+      final port = _port;
+      if (port == null) return;
+      final bytes = await port.readBytes(
+        512,
+        timeout: const Duration(milliseconds: 40),
+      );
+      if (bytes.isNotEmpty) _scanUrc(latin1.decode(bytes, allowInvalid: true));
+    } finally {
+      _busy = false;
+    }
+  }
+
+  void _scanUrc(String chunk) {
+    final upper = chunk.toUpperCase();
+    if (upper.contains('+CMTI:')) _smsHint = true;
+    if (RegExp(r'(^|\n)\s*RING').hasMatch(upper) || upper.contains('+CLIP:')) {
+      _ringing = true;
+    }
+    final clip = RegExp(r'\+CLIP:\s*"([^"]*)"', caseSensitive: false).firstMatch(chunk);
+    if (clip != null) _incomingNumber = clip.group(1) ?? '';
+    if (upper.contains('^CEND') || upper.contains('NO CARRIER')) {
+      _callEndedHint = true;
+      _ringing = false;
+    }
+  }
 
   String? _firstUsefulLine(String text) {
     for (final line in text.split(RegExp(r'\r?\n'))) {

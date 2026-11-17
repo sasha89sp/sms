@@ -103,6 +103,11 @@ class UssdCodec {
         carryBits = 0;
       }
     }
+    return gsmSeptetsToString(septets).trim();
+  }
+
+  /// Переводит последовательность septet-кодов GSM 03.38 в строку.
+  static String gsmSeptetsToString(List<int> septets) {
     final out = StringBuffer();
     var escape = false;
     for (final s in septets) {
@@ -115,7 +120,7 @@ class UssdCodec {
         out.write(s < _gsmBasic.length ? _gsmBasic[s] : '?');
       }
     }
-    return out.toString().trim();
+    return out.toString();
   }
 
   static const _gsmExt = {
@@ -165,7 +170,22 @@ class UssdCodec {
 
   static String extractBalance(String text) {
     final normalized = text.replaceAll(',', '.');
-    final matches = RegExp(r'(?<!\d)(\d{1,8}(?:\.\d{1,2})?)(?!\d)')
+    final lower = normalized.toLowerCase();
+
+    // 1) число рядом со словом «баланс / остаток».
+    final labeled = RegExp(
+      r'(?:баланс|balance|остаток|на счету|на счёте)\D{0,15}?(-?\d{1,8}(?:\.\d{1,2})?)',
+    ).firstMatch(lower);
+    if (labeled != null) return labeled.group(1) ?? '';
+
+    // 2) число перед обозначением валюты.
+    final currency = RegExp(
+      r'(-?\d{1,8}(?:\.\d{1,2})?)\s*(?:р(?![а-яё])|руб|rub|₽)',
+    ).firstMatch(lower);
+    if (currency != null) return currency.group(1) ?? '';
+
+    // 3) последнее число в тексте.
+    final matches = RegExp(r'(?<!\d)(-?\d{1,8}(?:\.\d{1,2})?)(?!\d)')
         .allMatches(normalized)
         .toList();
     if (matches.isEmpty) return '';

@@ -1,17 +1,19 @@
 import 'dart:convert';
-
-import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io';
 
 import '../models/app_settings.dart';
+import 'app_paths.dart';
 
+/// Настройки хранятся в settings.json рядом с программой (портативно).
 class SettingsStore {
-  static const _key = 'huawei_modem_manager.settings.v1';
+  File get _file => File(AppPaths.instance.settingsFile);
 
   Future<AppSettings> load() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_key);
-    if (raw == null || raw.isEmpty) return const AppSettings();
     try {
+      final file = _file;
+      if (!await file.exists()) return const AppSettings();
+      final raw = await file.readAsString();
+      if (raw.trim().isEmpty) return const AppSettings();
       return AppSettings.fromJson(jsonDecode(raw) as Map<String, dynamic>);
     } catch (_) {
       return const AppSettings();
@@ -19,7 +21,11 @@ class SettingsStore {
   }
 
   Future<void> save(AppSettings settings) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_key, jsonEncode(settings.toJson()));
+    final file = _file;
+    final temp = File('${file.path}.tmp');
+    const encoder = JsonEncoder.withIndent('  ');
+    await temp.writeAsString(encoder.convert(settings.toJson()), flush: true);
+    if (await file.exists()) await file.delete();
+    await temp.rename(file.path);
   }
 }
