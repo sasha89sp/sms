@@ -1,54 +1,98 @@
 import 'package:flutter_test/flutter_test.dart';
-<<<<<<< HEAD
 import 'package:huawei_modem_manager/models/excel_fields.dart';
-=======
->>>>>>> f098d7b0a7509c8378736718f56bf7eacebf9ad0
 import 'package:huawei_modem_manager/models/scenario.dart';
 import 'package:huawei_modem_manager/services/excel_exporter.dart';
+import 'package:huawei_modem_manager/services/sms_pdu.dart';
+import 'package:huawei_modem_manager/services/ussd_codec.dart';
 
 void main() {
-  group('Scenario Model & Exporter Tests', () {
-    test('ScenarioItem serialization roundtrip', () {
-      final jsonMap = {
-        'id': 'test_id_1',
-        'name': 'Auto USSD Check',
-        'description': 'Periodically checks balance via USSD',
-        'enabled': true,
-        'steps': [
-          {
-            'id': 'step_1',
-            'type': 'ussd',
-            'value': '*100#',
-            'waitMs': 2000,
-          }
-        ]
-      };
-
-      final scenario = ScenarioItem.fromJson(jsonMap);
-      expect(scenario.id, equals('test_id_1'));
-      expect(scenario.name, equals('Auto USSD Check'));
-      expect(scenario.enabled, isTrue);
-      expect(scenario.steps.length, equals(1));
-      expect(scenario.steps[0].value, equals('*100#'));
-      expect(scenario.steps[0].waitMs, equals(2000));
-
-      final exportedJson = scenario.toJson();
-      expect(exportedJson['id'], equals(jsonMap['id']));
-      expect(exportedJson['name'], equals(jsonMap['name']));
-      expect(exportedJson['enabled'], equals(jsonMap['enabled']));
-      expect((exportedJson['steps'] as List).length, equals(1));
+  group('SmsPduDecoder', () {
+    test('decodes classic GSM 7-bit SMS-DELIVER', () {
+      final sms = SmsPduDecoder.decode(
+          '07917283010010F5040BC87238880900F10000993092516195800AE8329BFD4697D9EC37');
+      expect(sms, isNotNull);
+      expect(sms!.text, 'hellohello');
+      expect(sms.sender, '27838890001');
+      expect(sms.outgoing, isFalse);
     });
 
-    test('ScenarioStep default waitMs value', () {
-      final step = ScenarioStep(
-        id: 's2',
-        type: 'sms',
-        value: 'Hello',
+    test('decodes UCS-2 SMS-DELIVER with international sender', () {
+      final sms = SmsPduDecoder.decode(
+          '00040B919700214365F70008621161818544210C041F04400438043204350442');
+      expect(sms, isNotNull);
+      expect(sms!.text, 'Привет');
+      expect(sms.sender, '+79001234567');
+      expect(sms.time, '2026-11-16 18:58:44');
+    });
+
+    test('merges concatenated parts into one message', () {
+      final merged = SmsPduDecoder.decodeAndMerge(const [
+        RawSms(
+          storage: 'SM',
+          index: 1,
+          stat: 0,
+          pdu: '00440B919700214365F70008621161818544210C050003AB0201041F04400438',
+        ),
+        RawSms(
+          storage: 'SM',
+          index: 2,
+          stat: 0,
+          pdu: '00440B919700214365F70008621161818544210C050003AB0202043204350442',
+        ),
+      ]);
+      expect(merged, hasLength(1));
+      expect(merged.first.text, 'Привет');
+      expect(merged.first.refs, ['SM:1', 'SM:2']);
+    });
+
+    test('holds incomplete concatenated groups', () {
+      final merged = SmsPduDecoder.decodeAndMerge(const [
+        RawSms(
+          storage: 'SM',
+          index: 1,
+          stat: 1,
+          pdu: '00440B919700214365F70008621161818544210C050003AB0201041F04400438',
+        ),
+      ]);
+      expect(merged, isEmpty);
+    });
+  });
+
+  group('Balance extraction', () {
+    test('finds balance next to a label or currency', () {
+      expect(UssdCodec.extractBalance('Баланс:2663,62р'), '2663.62');
+      expect(UssdCodec.extractBalance('Ваш баланс 50.5 руб.'), '50.5');
+      expect(UssdCodec.extractBalance('12,00 р.'), '12.00');
+      expect(UssdCodec.extractBalance('Остаток: -3.4р'), '-3.4');
+    });
+  });
+
+  group('Scenario', () {
+    test('builds unique Excel column headers in step order', () {
+      final scenario = Scenario(
+        id: '1',
+        name: 'Тест',
+        steps: const [
+          ScenarioStep(id: 'a', type: StepType.ownNumber, code: '*161#'),
+          ScenarioStep(id: 'b', type: StepType.ussd, code: '*100#'),
+          ScenarioStep(id: 'c', type: StepType.balance, code: '*100#'),
+          ScenarioStep(id: 'd', type: StepType.sms, recipient: '+7900'),
+          ScenarioStep(id: 'e', type: StepType.pause, seconds: 5),
+          ScenarioStep(id: 'f', type: StepType.balance, code: '*100#'),
+          ScenarioStep(id: 'g', type: StepType.ussd, code: '*100#'),
+        ],
       );
-      expect(step.waitMs, equals(1000));
+      expect(scenario.columnHeaders(), [
+        null,
+        'USSD *100#',
+        'Баланс 1 (*100#)',
+        'SMS → +7900',
+        null,
+        'Баланс 2 (*100#)',
+        'USSD *100# (2)',
+      ]);
     });
 
-<<<<<<< HEAD
     test('matches operator by substring, empty filter matches any', () {
       const any = Scenario(id: '1', name: 'a');
       const mts = Scenario(id: '2', name: 'b', operator: 'mts, beeline');
@@ -122,11 +166,6 @@ void main() {
       expect(back.waitSms, isTrue);
       expect(back.smsTimeout, 90);
       expect(back.smsSender, 'MTS');
-=======
-    test('ExcelExporter integration check', () {
-      final exporter = ExcelExporter();
-      expect(exporter, isNotNull);
->>>>>>> f098d7b0a7509c8378736718f56bf7eacebf9ad0
     });
   });
 }
