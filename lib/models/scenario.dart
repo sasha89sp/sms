@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+<<<<<<< HEAD
 /// Тип шага сценария.
 enum StepType { ownNumber, ussd, balance, sms, pause, call, dtmf }
 
@@ -231,10 +232,16 @@ class Scenario {
   factory Scenario.empty(String name) =>
       Scenario(id: newId(), name: name, steps: const []);
 
+=======
+class ScenarioItem {
+>>>>>>> f098d7b0a7509c8378736718f56bf7eacebf9ad0
   final String id;
   final String name;
+  final String description;
+  final bool enabled;
   final List<ScenarioStep> steps;
 
+<<<<<<< HEAD
   /// Подстрока названия оператора (МТС, Билайн…). Пусто — для любого.
   final String operator;
 
@@ -387,43 +394,68 @@ class RunRow {
       }
     }
     return result;
+=======
+  ScenarioItem({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.enabled,
+    required this.steps,
+  });
+
+  factory ScenarioItem.fromJson(Map<String, dynamic> json) {
+    return ScenarioItem(
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      enabled: json['enabled'] as bool? ?? false,
+      steps: (json['steps'] as List<dynamic>?)
+              ?.map((e) => ScenarioStep.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+    );
+>>>>>>> f098d7b0a7509c8378736718f56bf7eacebf9ad0
   }
 
-  /// Для старых записей (версия 2.0): столбцы и ячейки по порядку шагов.
-  static Map<String, CellData> fromLegacy(String columnsJson, String cellsJson) {
-    final columns = (jsonDecode(columnsJson) as List).map((e) => '$e').toList();
-    final cells = (jsonDecode(cellsJson) as List)
-        .whereType<Map>()
-        .map((item) => CellData.fromJson(Map<String, dynamic>.from(item)))
-        .toList();
-    final result = <String, CellData>{};
-    var step = 0;
-    for (var i = 0; i < columns.length && i < cells.length; i++) {
-      switch (columns[i]) {
-        case 'SIM':
-          result['sim'] = cells[i];
-          break;
-        case 'Сверка баланса':
-          result['balance_status'] = cells[i];
-          break;
-        case 'Изменение баланса':
-          result['balance_diff'] = cells[i];
-          break;
-        default:
-          step++;
-          result['step:$step'] = cells[i];
-      }
-    }
-    return result;
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'enabled': enabled,
+      'steps': steps.map((e) => e.toJson()).toList(),
+    };
   }
 }
 
-enum LiveStatus { pending, running, ok, error, skipped }
+class ScenarioStep {
+  final String id;
+  final String type;
+  final String value;
+  final int waitMs;
 
-/// Состояние шага во время выполнения (для экрана).
-class LiveStep {
-  LiveStep({required this.title, this.status = LiveStatus.pending});
-  final String title;
-  LiveStatus status;
-  String value = '';
+  ScenarioStep({
+    required this.id,
+    required this.type,
+    required this.value,
+    this.waitMs = 1000,
+  });
+
+  factory ScenarioStep.fromJson(Map<String, dynamic> json) {
+    return ScenarioStep(
+      id: json['id'] as String? ?? '',
+      type: json['type'] as String? ?? '',
+      value: json['value'] as String? ?? '',
+      waitMs: json['waitMs'] as int? ?? 1000,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'type': type,
+      'value': value,
+      'waitMs': waitMs,
+    };
+  }
 }
