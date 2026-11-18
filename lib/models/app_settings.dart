@@ -17,15 +17,7 @@ class AppSettings {
     this.smsRequireNetworkAck = false,
     this.scenarios = const [],
     this.savedUssd = const [],
-<<<<<<< HEAD
     this.excelColumns = const [],
-=======
-<<<<<<< HEAD
-    this.excelColumns = const [],
-=======
-    this.excelIncludeDate = true,
->>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
->>>>>>> 887366133c493cb7455998e386988932333c2e18
     this.smsMinBalance = 0,
     this.smsAutoReceive = true,
     this.smsPollSeconds = 15,
@@ -55,17 +47,8 @@ class AppSettings {
   final List<SavedUssd> savedUssd;
 
   /// Добавлять в Excel столбец с датой и временем запуска.
-<<<<<<< HEAD
   /// Столбцы Excel по порядку; пусто — все.
   final List<String> excelColumns;
-=======
-<<<<<<< HEAD
-  /// Столбцы Excel по порядку; пусто — все.
-  final List<String> excelColumns;
-=======
-  final bool excelIncludeDate;
->>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
->>>>>>> 887366133c493cb7455998e386988932333c2e18
 
   /// Если известный баланс ниже этой суммы — SMS не отправляется,
   /// шаг помечается «Недостаточно средств». 0 — проверка выключена.
@@ -96,15 +79,7 @@ class AppSettings {
     bool? smsRequireNetworkAck,
     List<Scenario>? scenarios,
     List<SavedUssd>? savedUssd,
-<<<<<<< HEAD
     List<String>? excelColumns,
-=======
-<<<<<<< HEAD
-    List<String>? excelColumns,
-=======
-    bool? excelIncludeDate,
->>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
->>>>>>> 887366133c493cb7455998e386988932333c2e18
     double? smsMinBalance,
     bool? smsAutoReceive,
     int? smsPollSeconds,
@@ -129,15 +104,7 @@ class AppSettings {
           smsRequireNetworkAck ?? this.smsRequireNetworkAck,
       scenarios: scenarios ?? this.scenarios,
       savedUssd: savedUssd ?? this.savedUssd,
-<<<<<<< HEAD
       excelColumns: excelColumns ?? this.excelColumns,
-=======
-<<<<<<< HEAD
-      excelColumns: excelColumns ?? this.excelColumns,
-=======
-      excelIncludeDate: excelIncludeDate ?? this.excelIncludeDate,
->>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
->>>>>>> 887366133c493cb7455998e386988932333c2e18
       smsMinBalance: smsMinBalance ?? this.smsMinBalance,
       smsAutoReceive: smsAutoReceive ?? this.smsAutoReceive,
       smsPollSeconds: smsPollSeconds ?? this.smsPollSeconds,
@@ -163,15 +130,7 @@ class AppSettings {
         'smsRequireNetworkAck': smsRequireNetworkAck,
         'scenarios': scenarios.map((item) => item.toJson()).toList(),
         'savedUssd': savedUssd.map((item) => item.toJson()).toList(),
-<<<<<<< HEAD
         'excelColumns': excelColumns,
-=======
-<<<<<<< HEAD
-        'excelColumns': excelColumns,
-=======
-        'excelIncludeDate': excelIncludeDate,
->>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
->>>>>>> 887366133c493cb7455998e386988932333c2e18
         'smsMinBalance': smsMinBalance,
         'smsAutoReceive': smsAutoReceive,
         'smsPollSeconds': smsPollSeconds,
@@ -202,15 +161,7 @@ class AppSettings {
             .whereType<Map>()
             .map((item) => SavedUssd.fromJson(Map<String, dynamic>.from(item)))
             .toList(),
-<<<<<<< HEAD
         excelColumns: ((json['excelColumns'] as List?) ?? const []).map((e) => '$e').toList(),
-=======
-<<<<<<< HEAD
-        excelColumns: ((json['excelColumns'] as List?) ?? const []).map((e) => '$e').toList(),
-=======
-        excelIncludeDate: json['excelIncludeDate'] as bool? ?? true,
->>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
->>>>>>> 887366133c493cb7455998e386988932333c2e18
         smsMinBalance: (json['smsMinBalance'] as num?)?.toDouble() ?? 0,
         smsAutoReceive: json['smsAutoReceive'] as bool? ?? true,
         smsPollSeconds: (json['smsPollSeconds'] as num?)?.toInt() ?? 15,

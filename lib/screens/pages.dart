@@ -5,14 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../app_controller.dart';
 import '../models/call_info.dart';
-<<<<<<< HEAD
 import '../models/excel_fields.dart';
-=======
-<<<<<<< HEAD
-import '../models/excel_fields.dart';
-=======
->>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
->>>>>>> 887366133c493cb7455998e386988932333c2e18
 import '../models/scenario.dart';
 
 part 'calls_page.dart';

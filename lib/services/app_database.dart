@@ -12,10 +12,6 @@ class AppDatabase {
     final database = await databaseFactoryFfi.openDatabase(
       AppPaths.instance.dbFile,
       options: OpenDatabaseOptions(
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 887366133c493cb7455998e386988932333c2e18
         version: 3,
         onCreate: (db, version) async => _createAll(db),
         onUpgrade: (db, oldVersion, newVersion) async {
@@ -29,11 +25,6 @@ class AppDatabase {
             }
           }
         },
-=======
-        version: 2,
-        onCreate: (db, version) async => _createAll(db),
-        onUpgrade: (db, oldVersion, newVersion) async => _createAll(db),
->>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
       ),
     );
     return AppDatabase._(database);
@@ -68,17 +59,8 @@ class AppDatabase {
         started_at TEXT NOT NULL,
         scenario_name TEXT NOT NULL,
         columns_json TEXT NOT NULL,
-<<<<<<< HEAD
         cells_json TEXT NOT NULL DEFAULT '[]',
         fields_json TEXT NOT NULL DEFAULT '',
-=======
-<<<<<<< HEAD
-        cells_json TEXT NOT NULL DEFAULT '[]',
-        fields_json TEXT NOT NULL DEFAULT '',
-=======
-        cells_json TEXT NOT NULL,
->>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
->>>>>>> 887366133c493cb7455998e386988932333c2e18
         balance_status TEXT NOT NULL DEFAULT '',
         success INTEGER NOT NULL DEFAULT 1
       )
@@ -139,36 +121,16 @@ class AppDatabase {
   Future<int> insertRun({
     required DateTime startedAt,
     required String scenarioName,
-<<<<<<< HEAD
     required String fieldsJson,
-=======
-<<<<<<< HEAD
-    required String fieldsJson,
-=======
-    required String columnsJson,
-    required String cellsJson,
->>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
->>>>>>> 887366133c493cb7455998e386988932333c2e18
     required String balanceStatus,
     required bool success,
   }) =>
       _database.insert('scenario_runs', {
         'started_at': startedAt.toIso8601String(),
         'scenario_name': scenarioName,
-<<<<<<< HEAD
         'columns_json': '[]',
         'cells_json': '[]',
         'fields_json': fieldsJson,
-=======
-<<<<<<< HEAD
-        'columns_json': '[]',
-        'cells_json': '[]',
-        'fields_json': fieldsJson,
-=======
-        'columns_json': columnsJson,
-        'cells_json': cellsJson,
->>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
->>>>>>> 887366133c493cb7455998e386988932333c2e18
         'balance_status': balanceStatus,
         'success': success ? 1 : 0,
       });
@@ -250,10 +212,6 @@ class AppDatabase {
     return true;
   }
 
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 887366133c493cb7455998e386988932333c2e18
   /// Входящие SMS, сохранённые после момента [since].
   Future<List<Map<String, Object?>>> incomingSince(DateTime since) =>
       _database.query('sms_store',
@@ -261,11 +219,6 @@ class AppDatabase {
           whereArgs: [since.toIso8601String()],
           orderBy: 'id ASC');
 
-<<<<<<< HEAD
-=======
-=======
->>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
->>>>>>> 887366133c493cb7455998e386988932333c2e18
   Future<List<Map<String, Object?>>> smsByFolder(String folder,
           {int limit = 1000}) =>
       _database.query('sms_store',
