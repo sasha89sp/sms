@@ -20,6 +20,13 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _statusReport = false;
   bool _smsAuto = true;
   bool _deleteFromModem = false;
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+  bool _excelDate = true;
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
   bool _closeToTray = true;
 
   @override
@@ -38,6 +45,13 @@ class _SettingsPageState extends State<SettingsPage> {
     _statusReport = s.smsRequireNetworkAck;
     _smsAuto = s.smsAutoReceive;
     _deleteFromModem = s.deleteSmsFromModem;
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+    _excelDate = s.excelIncludeDate;
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
     _closeToTray = s.closeToTray;
   }
 
@@ -154,8 +168,22 @@ class _SettingsPageState extends State<SettingsPage> {
       _Panel(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           const Text('Excel и приложение', style: TextStyle(fontWeight: FontWeight.w700)),
+<<<<<<< HEAD
           const Text('Столбцы Excel (в том числе дата) выбираются на странице «Сценарии» → «Столбцы таблицы».',
               style: TextStyle(color: _muted, fontSize: 10)),
+=======
+<<<<<<< HEAD
+          const Text('Столбцы Excel (в том числе дата) выбираются на странице «Сценарии» → «Столбцы таблицы».',
+              style: TextStyle(color: _muted, fontSize: 10)),
+=======
+          SwitchListTile.adaptive(
+            contentPadding: EdgeInsets.zero,
+            value: _excelDate,
+            onChanged: (value) => setState(() => _excelDate = value),
+            title: const Text('Добавлять дату и время в таблицу Excel', style: TextStyle(fontSize: 12)),
+          ),
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
           SwitchListTile.adaptive(
             contentPadding: EdgeInsets.zero,
             value: _closeToTray,
@@ -204,6 +232,13 @@ class _SettingsPageState extends State<SettingsPage> {
       smsPollSeconds: poll,
       deleteSmsFromModem: _deleteFromModem,
       smsMinBalance: minBalance,
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+      excelIncludeDate: _excelDate,
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
       closeToTray: _closeToTray,
     );
     await _perform(context, () => c.updateSettings(settings), successMessage: 'Настройки сохранены');

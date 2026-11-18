@@ -11,7 +11,14 @@ class CallsPage extends StatefulWidget {
 class _CallsPageState extends State<CallsPage> {
   late final TextEditingController _number = TextEditingController();
   late final TextEditingController _wav = TextEditingController();
+<<<<<<< HEAD
   late final TextEditingController _phraseName = TextEditingController();
+=======
+<<<<<<< HEAD
+  late final TextEditingController _phraseName = TextEditingController();
+=======
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
   Timer? _ticker;
   String _sentDigits = '';
   String _voiceInfo = '';
@@ -29,7 +36,14 @@ class _CallsPageState extends State<CallsPage> {
     _ticker?.cancel();
     _number.dispose();
     _wav.dispose();
+<<<<<<< HEAD
     _phraseName.dispose();
+=======
+<<<<<<< HEAD
+    _phraseName.dispose();
+=======
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
     super.dispose();
   }
 
@@ -223,6 +237,10 @@ class _CallsPageState extends State<CallsPage> {
               child: Text(voice.lastError, style: TextStyle(color: Colors.red.shade700, fontSize: 10)),
             ),
           const SizedBox(height: 12),
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
           const Text('Фразы для вызова', style: TextStyle(fontWeight: FontWeight.w700)),
           const SizedBox(height: 6),
           Row(children: [
@@ -258,18 +276,39 @@ class _CallsPageState extends State<CallsPage> {
             ],
           ]),
           const SizedBox(height: 8),
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
           Row(children: [
             Expanded(
               child: TextField(
                 controller: _wav,
+<<<<<<< HEAD
                 decoration: const InputDecoration(
                   labelText: 'Импорт: путь к WAV-файлу (будет сохранён под названием выше)',
                   isDense: true,
+=======
+<<<<<<< HEAD
+                decoration: const InputDecoration(
+                  labelText: 'Импорт: путь к WAV-файлу (будет сохранён под названием выше)',
+                  isDense: true,
+=======
+                decoration: InputDecoration(
+                  labelText: 'WAV-файл для проигрывания в вызов',
+                  hintText: '${c.paths.soundsDir}\\da.wav',
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
                 ),
               ),
             ),
             const SizedBox(width: 8),
             OutlinedButton.icon(
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
               onPressed: () => _perform(
                 context,
                 () async {
@@ -320,6 +359,20 @@ class _CallsPageState extends State<CallsPage> {
               ),
           const SizedBox(height: 4),
           Text('Фразы хранятся в папке: ${c.paths.soundsDir}',
+<<<<<<< HEAD
+=======
+=======
+              onPressed: active && voice != null
+                  ? () => _perform(context, () => c.playWavIntoCall(_wav.text.trim()), successMessage: 'Файл отправлен в вызов')
+                  : null,
+              icon: const Icon(Icons.play_arrow, size: 18),
+              label: const Text('Проиграть'),
+            ),
+          ]),
+          const SizedBox(height: 4),
+          Text('Положите файл (например, da.wav — несжатый WAV 16 бит) в папку: ${c.paths.soundsDir}',
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
               style: const TextStyle(color: _muted, fontSize: 10)),
         ]),
       ),

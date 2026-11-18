@@ -98,6 +98,10 @@ class _SmsPageState extends State<SmsPage> {
       ),
       const SizedBox(height: 14),
       _Panel(
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
         child: Row(children: [
           const Expanded(
             child: Text('Приходят ли новые SMS: проверка настроек модема (AT+CNMI, память, счётчик уведомлений).',
@@ -136,6 +140,11 @@ class _SmsPageState extends State<SmsPage> {
       ),
       const SizedBox(height: 14),
       _Panel(
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
             Expanded(

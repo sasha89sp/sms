@@ -8,7 +8,14 @@ import 'package:path/path.dart' as p;
 
 import 'models/app_settings.dart';
 import 'models/call_info.dart';
+<<<<<<< HEAD
 import 'models/excel_fields.dart';
+=======
+<<<<<<< HEAD
+import 'models/excel_fields.dart';
+=======
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
 import 'models/modem_info.dart';
 import 'models/operation_record.dart';
 import 'models/scenario.dart';
@@ -20,7 +27,14 @@ import 'services/settings_store.dart';
 import 'services/sms_pdu.dart';
 import 'services/ussd_codec.dart';
 import 'services/voice_bridge.dart';
+<<<<<<< HEAD
 import 'services/winmm_audio.dart';
+=======
+<<<<<<< HEAD
+import 'services/winmm_audio.dart';
+=======
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
 
 /// Результат выполнения одного шага.
 class StepOutcome {
@@ -105,6 +119,10 @@ class AppController extends ChangeNotifier {
   String callStatus = '';
   VoiceBridge? voice;
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
   // Фразы для звонков
   List<String> phrases = [];
   bool isRecordingPhrase = false;
@@ -113,6 +131,11 @@ class AppController extends ChangeNotifier {
   Timer? _phraseTimer;
   final BytesBuilder _phraseBuffer = BytesBuilder(copy: false);
 
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
   Timer? _slowTimer;
   Timer? _fastTimer;
   bool _slowBusy = false;
@@ -148,7 +171,14 @@ class AppController extends ChangeNotifier {
     );
     await controller.loadHistory();
     await controller.reloadSms();
+<<<<<<< HEAD
     await controller.loadPhrases();
+=======
+<<<<<<< HEAD
+    await controller.loadPhrases();
+=======
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
     await controller.refreshPorts();
     controller._startTimers();
     return controller;
@@ -262,6 +292,10 @@ class AppController extends ChangeNotifier {
           break;
         case StepType.call:
           if (step.recipient.trim().isEmpty) problems.add('$label: не задан номер для звонка.');
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
           for (final action in step.actions) {
             if (action.value.trim().isEmpty) {
               problems.add('$label: в действии на ${action.at} с не выбрана фраза/цифры.');
@@ -272,6 +306,11 @@ class AppController extends ChangeNotifier {
               problems.add('$label: действие на ${action.at} с позже конца разговора (${step.seconds} с).');
             }
           }
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
           break;
         case StepType.dtmf:
           if (step.digits.trim().isEmpty) problems.add('$label: не заданы цифры.');
@@ -661,7 +700,14 @@ class AppController extends ChangeNotifier {
     final errors = <String>[];
     final balances = <double>[];
     final smsStatuses = <String>[];
+<<<<<<< HEAD
     final callStatuses = <String>[];
+=======
+<<<<<<< HEAD
+    final callStatuses = <String>[];
+=======
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
     final context = _RunContext();
     var firstBalanceText = '';
     var lastBalanceText = '';
@@ -729,7 +775,14 @@ class AppController extends ChangeNotifier {
             if (firstBalanceText.isEmpty) firstBalanceText = outcome.text;
           }
           if (step.type == StepType.sms) smsStatuses.add(outcome.text);
+<<<<<<< HEAD
           if (step.type == StepType.call) callStatuses.add(outcome.text);
+=======
+<<<<<<< HEAD
+          if (step.type == StepType.call) callStatuses.add(outcome.text);
+=======
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
           _log(outcome.ok ? 'SUCCESS' : 'ERROR', 'Шаг: ${live.title}', raw: outcome.text);
           notifyListeners();
 
@@ -766,6 +819,10 @@ class AppController extends ChangeNotifier {
           ? context.ownNumber
           : (simPhone.isNotEmpty ? simPhone : simId);
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
       final fields = <String, CellData>{
         ExcelFields.sim: CellData(simDisplay),
         ExcelFields.iccid: CellData(simId),
@@ -788,12 +845,38 @@ class AppController extends ChangeNotifier {
         fields[ExcelFields.stepId(i + 1)] = stepCells[i] ?? const CellData('');
         fields[ExcelFields.stepNameId(i + 1)] = CellData(header);
       }
+<<<<<<< HEAD
+=======
+=======
+      final columns = <String>['SIM'];
+      final cells = <CellData>[CellData(simDisplay)];
+      for (var i = 0; i < scenario.steps.length; i++) {
+        final header = headers[i];
+        if (header == null) continue;
+        columns.add(header);
+        cells.add(stepCells[i] ?? const CellData(''));
+      }
+      columns.add('Сверка баланса');
+      cells.add(CellData(status));
+      columns.add('Изменение баланса');
+      cells.add(CellData(diff?.toStringAsFixed(2) ?? '', number: diff));
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
 
       try {
         await database.insertRun(
           startedAt: startedAt,
           scenarioName: scenario.name,
+<<<<<<< HEAD
           fieldsJson: RunRow.encodeFields(fields),
+=======
+<<<<<<< HEAD
+          fieldsJson: RunRow.encodeFields(fields),
+=======
+          columnsJson: RunRow.encodeColumns(columns),
+          cellsJson: RunRow.encodeCells(cells),
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
           balanceStatus: status,
           success: success,
         );
@@ -853,7 +936,24 @@ class AppController extends ChangeNotifier {
         }
 
       case StepType.balance:
+<<<<<<< HEAD
         return _balanceStep(step, context);
+=======
+<<<<<<< HEAD
+        return _balanceStep(step, context);
+=======
+        {
+        final response = await _ussdWithRetry(step.code);
+        final text = UssdCodec.extractBalance(response);
+        final number = double.tryParse(text);
+        if (number == null) {
+          return StepOutcome('Баланс не распознан: ${_oneLine(response)}', ok: false);
+        }
+        context.lastBalance = number;
+        return StepOutcome(text, number: number);
+        }
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
 
       case StepType.sms:
         {
@@ -901,6 +1001,10 @@ class AppController extends ChangeNotifier {
     }
   }
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
   /// Проверка баланса. Если USSD-ответ без суммы (оператор прислал баланс
   /// по SMS) — ждёт входящее SMS и берёт сумму из него.
   Future<StepOutcome> _balanceStep(ScenarioStep step, _RunContext context) async {
@@ -988,6 +1092,13 @@ class AppController extends ChangeNotifier {
       }
     }
 
+<<<<<<< HEAD
+=======
+=======
+  /// Звонок в сценарии: набор → ожидание ответа → разговор N секунд → отбой.
+  Future<StepOutcome> _runCallStep(ScenarioStep step) async {
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
     await modem.dial(step.recipient);
     try {
       await modem.routeAudioToUsb();
@@ -1018,6 +1129,10 @@ class AppController extends ChangeNotifier {
       return const StepOutcome('Не соединено (занято, нет ответа или сброс)', ok: false);
     }
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
     if (needAudio) {
       try {
         final created = VoiceBridge(portName: settings.audioPort);
@@ -1060,6 +1175,17 @@ class AppController extends ChangeNotifier {
         }
       }
       await Future<void>.delayed(const Duration(milliseconds: 300));
+<<<<<<< HEAD
+=======
+=======
+    final talkStart = DateTime.now();
+    var endedEarly = false;
+    emptyPolls = 0;
+    while (DateTime.now().difference(talkStart) < Duration(seconds: step.seconds)) {
+      if (_abortRun || !isConnected) break;
+      await Future<void>.delayed(const Duration(milliseconds: 700));
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
       final calls = await modem.currentCalls();
       if (calls.isEmpty) {
         emptyPolls++;
@@ -1072,6 +1198,10 @@ class AppController extends ChangeNotifier {
       }
     }
     final talked = DateTime.now().difference(talkStart).inSeconds;
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
     // Если фраза ещё звучит — дослушиваем её до конца (не дольше 15 с).
     final waitEnd = DateTime.now().add(const Duration(seconds: 15));
     while (bridge != null &&
@@ -1080,17 +1210,35 @@ class AppController extends ChangeNotifier {
         DateTime.now().isBefore(waitEnd)) {
       await Future<void>.delayed(const Duration(milliseconds: 200));
     }
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
     if (!endedEarly) {
       try {
         await modem.hangUp();
       } catch (_) {}
     }
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
     if (bridge != null) await bridge.stop();
     final detail = notes.where((n) => n.isNotEmpty).join('; ');
     return StepOutcome(
       '${endedEarly ? 'Соединено, абонент завершил вызов через $talked с' : 'Соединено, разговор $talked с'}'
       '${detail.isEmpty ? '' : '. Действия: $detail'}',
       ok: !failed,
+<<<<<<< HEAD
+=======
+=======
+    return StepOutcome(
+      endedEarly
+          ? 'Соединено, абонент завершил вызов через $talked с'
+          : 'Соединено, разговор $talked с',
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
     );
   }
 
@@ -1128,6 +1276,10 @@ class AppController extends ChangeNotifier {
     final rows = <RunRow>[];
     for (final row in stored) {
       try {
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
         final fieldsRaw = '${row['fields_json'] ?? ''}';
         final fields = fieldsRaw.trim().isNotEmpty
             ? RunRow.decodeFields(fieldsRaw)
@@ -1136,6 +1288,16 @@ class AppController extends ChangeNotifier {
           startedAt: DateTime.tryParse('${row['started_at']}') ?? DateTime.now(),
           scenarioName: '${row['scenario_name']}',
           fields: fields,
+<<<<<<< HEAD
+=======
+=======
+        rows.add(RunRow(
+          startedAt: DateTime.tryParse('${row['started_at']}') ?? DateTime.now(),
+          scenarioName: '${row['scenario_name']}',
+          columns: RunRow.decodeColumns('${row['columns_json']}'),
+          cells: RunRow.decodeCells('${row['cells_json']}'),
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
           balanceStatus: '${row['balance_status'] ?? ''}',
           success: row['success'] == 1,
         ));
@@ -1146,7 +1308,15 @@ class AppController extends ChangeNotifier {
     final path = await ExcelExporter.write(
       path: paths.excelFile,
       rows: rows,
+<<<<<<< HEAD
       selectedColumns: settings.excelColumns,
+=======
+<<<<<<< HEAD
+      selectedColumns: settings.excelColumns,
+=======
+      includeDate: settings.excelIncludeDate,
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
     );
     lastExcelPath = path;
     excelMessage = path == paths.excelFile
@@ -1616,6 +1786,10 @@ class AppController extends ChangeNotifier {
   }
 
   // ---------------------------------------------------------------------
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
   // Фразы для звонков
   // ---------------------------------------------------------------------
 
@@ -1733,6 +1907,11 @@ class AppController extends ChangeNotifier {
   }
 
   // ---------------------------------------------------------------------
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
+>>>>>>> 887366133c493cb7455998e386988932333c2e18
   // Экспорт журнала и служебное
   // ---------------------------------------------------------------------
 
