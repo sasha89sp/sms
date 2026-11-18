@@ -1,9 +1,18 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../app_controller.dart';
-import '../models/app_settings.dart';
-import '../models/sms_item.dart';
+import '../models/call_info.dart';
+import '../models/excel_fields.dart';
+import '../models/scenario.dart';
+
+part 'calls_page.dart';
+part 'scenario_page.dart';
+part 'settings_page.dart';
+part 'sms_page.dart';
+part 'ussd_page.dart';
 
 const _blue = Color(0xFF246BCE);
 const _muted = Color(0xFF64748B);
@@ -329,10 +338,10 @@ class _DashboardPageState extends State<DashboardPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Автоматическая операция',
+                      Text('Сценарии',
                           style: TextStyle(fontWeight: FontWeight.w700)),
                       SizedBox(height: 4),
-                      Text('Номер → баланс → SMS → баланс',
+                      Text('Настраиваемая последовательность: USSD, SMS, звонки, Excel',
                           style: TextStyle(color: _muted, fontSize: 11)),
                     ],
                   ),
@@ -360,236 +369,6 @@ Widget _detailLine(String label, String value) => Padding(
         Expanded(child: Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500))),
       ]),
     );
-
-class AutomationPage extends StatelessWidget {
-  const AutomationPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.watch<AppController>();
-    final items = c.scenarioResults.entries.toList();
-    return _pageBody(ListView(children: [
-      _PageHeader(
-        'Автоматизация',
-        subtitle: 'Последовательность из четырёх операций',
-        trailing: FilledButton.icon(
-          onPressed: c.isConnected && !c.isRunning
-              ? () => _perform(context, () => c.runScenario())
-              : null,
-          icon: c.isRunning
-              ? const SizedBox(width: 15, height: 15, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-              : const Icon(Icons.play_arrow_rounded),
-          label: Text(c.isRunning ? 'Выполняется…' : 'Запустить вручную'),
-        ),
-      ),
-      const SizedBox(height: 16),
-      _Panel(
-        child: SwitchListTile.adaptive(
-          contentPadding: EdgeInsets.zero,
-          value: c.settings.autoStart,
-          onChanged: (value) => _perform(
-            context,
-            () => c.updateSettings(c.settings.copyWith(autoStart: value)),
-            successMessage: value ? 'Автозапуск включён' : 'Автозапуск выключен',
-          ),
-          title: const Text('Автоматический запуск после регистрации в сети',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-          subtitle: const Text(
-            'После подключения модема программа дождётся готовности SIM и регистрации в сети, затем выполнит сценарий один раз для текущего подключения.',
-            style: TextStyle(color: _muted, fontSize: 11),
-          ),
-        ),
-      ),
-      if (c.autoModeWaiting) ...[
-        const SizedBox(height: 10),
-        const _Panel(child: Row(children: [
-          Icon(Icons.hourglass_top_rounded, color: Color(0xFFB76E12), size: 18),
-          SizedBox(width: 9),
-          Expanded(child: Text('Автозапуск включён: ожидается регистрация SIM-карты в сети.', style: TextStyle(fontSize: 11))),
-        ])),
-      ],
-      const SizedBox(height: 14),
-      _Panel(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            const Expanded(child: Text('Ход выполнения', style: TextStyle(fontWeight: FontWeight.w700))),
-            _StatusTag(c.isRunning ? 'ВЫПОЛНЯЕТСЯ' : c.currentStep.contains('ошиб') ? 'ЕСТЬ ОШИБКИ' : 'ГОТОВ',
-                good: !c.isRunning && c.currentStep.contains('успешно'),
-                warning: c.currentStep.contains('ошиб')),
-          ]),
-          const SizedBox(height: 8),
-          Text(c.currentStep, style: const TextStyle(color: _muted, fontSize: 11)),
-          const SizedBox(height: 16),
-          ...List.generate(items.length, (index) {
-            final entry = items[index];
-            final running = entry.value == 'Выполняется…';
-            final error = entry.value.startsWith('ОШИБКА') || entry.value.startsWith('НЕ ОТПРАВЛЕНО');
-            final pending = entry.value == 'Ожидает выполнения';
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Container(
-                  width: 27,
-                  height: 27,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: error ? const Color(0xFFFFECEB) : running ? const Color(0xFFEAF2FF) : pending ? const Color(0xFFF0F3F7) : const Color(0xFFE9F7F0),
-                  ),
-                  child: Icon(error ? Icons.close : running ? Icons.sync : pending ? Icons.schedule : Icons.check,
-                      size: 15, color: error ? Colors.red : running ? _blue : pending ? _muted : const Color(0xFF16845B)),
-                ),
-                const SizedBox(width: 11),
-                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('${index + 1}. ${entry.key}', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
-                  const SizedBox(height: 3),
-                  SelectableText(entry.value, style: TextStyle(fontSize: 11, color: error ? Colors.red.shade700 : _muted)),
-                ])),
-              ]),
-            );
-          }),
-        ]),
-      ),
-      const SizedBox(height: 14),
-      _Panel(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Параметры сценария', style: TextStyle(fontWeight: FontWeight.w700)),
-          const SizedBox(height: 9),
-          _detailLine('USSD номера', c.settings.numberUssd.isEmpty ? 'Не задан' : c.settings.numberUssd),
-          _detailLine('USSD баланса', c.settings.balanceUssd),
-          _detailLine('Получатель SMS', c.settings.smsRecipient.isEmpty ? 'Не задан' : c.settings.smsRecipient),
-          _detailLine('Текст SMS', c.settings.smsText.isEmpty ? 'Не задан' : c.settings.smsText),
-          const SizedBox(height: 4),
-          Align(alignment: Alignment.centerRight, child: TextButton.icon(
-            onPressed: () => _showInfo(context, 'Параметры сценария', 'Коды USSD, номер получателя и текст SMS настраиваются в разделе «Настройки». Не используйте неизвестные USSD-команды: некоторые из них могут подключать платные услуги или менять тариф.'),
-            icon: const Icon(Icons.info_outline, size: 16), label: const Text('Важно'),
-          )),
-        ]),
-      ),
-    ]));
-  }
-}
-
-class SmsPage extends StatefulWidget {
-  const SmsPage({super.key});
-  @override
-  State<SmsPage> createState() => _SmsPageState();
-}
-
-class _SmsPageState extends State<SmsPage> {
-  late final TextEditingController _recipient;
-  late final TextEditingController _message;
-  String _filter = 'Все';
-
-  @override
-  void initState() {
-    super.initState();
-    final settings = context.read<AppController>().settings;
-    _recipient = TextEditingController(text: settings.smsRecipient);
-    _message = TextEditingController(text: settings.smsText);
-  }
-
-  @override
-  void dispose() {
-    _recipient.dispose();
-    _message.dispose();
-    super.dispose();
-  }
-
-  bool _isIncoming(SmsItem item) => item.status.toUpperCase().contains('REC');
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.watch<AppController>();
-    final visible = c.messages.where((m) => _filter == 'Все' || (_filter == 'Входящие' ? _isIncoming(m) : !_isIncoming(m))).toList();
-    return _pageBody(ListView(children: [
-      _PageHeader('SMS', subtitle: 'Чтение сообщений SIM-карты и отправка SMS на заданный номер', trailing: OutlinedButton.icon(
-        onPressed: c.isConnected && !c.isLoadingMessages ? () => _perform(context, c.refreshMessages) : null,
-        icon: c.isLoadingMessages ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.refresh, size: 17),
-        label: const Text('Обновить'),
-      )),
-      const SizedBox(height: 14),
-      _Panel(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('Новое сообщение', style: TextStyle(fontWeight: FontWeight.w700)),
-        const SizedBox(height: 12),
-        TextField(controller: _recipient, decoration: const InputDecoration(labelText: 'Номер получателя', hintText: '+7 900 000-00-00', prefixIcon: Icon(Icons.phone_android))),
-        const SizedBox(height: 10),
-        TextField(controller: _message, minLines: 2, maxLines: 5, decoration: const InputDecoration(labelText: 'Текст SMS', alignLabelWithHint: true)),
-        const SizedBox(height: 10),
-        Row(children: [
-          const Expanded(child: Text('Русский текст отправляется в UCS-2; длинные SMS разбиваются на части.', style: TextStyle(color: _muted, fontSize: 10))),
-          FilledButton.icon(
-            onPressed: c.isConnected ? () => _perform(context, () async {
-              await c.sendSmsManually(_recipient.text.trim(), _message.text);
-            }, successMessage: 'Команда отправки принята модемом') : null,
-            icon: const Icon(Icons.send_rounded, size: 16), label: const Text('Отправить'),
-          ),
-        ]),
-      ])),
-      const SizedBox(height: 14),
-      _Panel(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          const Expanded(child: Text('Память сообщений модема', style: TextStyle(fontWeight: FontWeight.w700))),
-          Text('${visible.length} шт.', style: const TextStyle(color: _muted, fontSize: 11)),
-        ]),
-        const SizedBox(height: 10),
-        Wrap(spacing: 7, children: ['Все', 'Входящие', 'Исходящие'].map((v) => ChoiceChip(label: Text(v), selected: _filter == v, onSelected: (_) => setState(() => _filter = v))).toList()),
-        const SizedBox(height: 9),
-        if (visible.isEmpty)
-          const Padding(padding: EdgeInsets.symmetric(vertical: 24), child: Center(child: Text('Сообщения не загружены или список пуст.', style: TextStyle(color: _muted, fontSize: 12))))
-        else
-          ...visible.map((item) => ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: CircleAvatar(backgroundColor: const Color(0xFFEAF2FF), child: Icon(_isIncoming(item) ? Icons.call_received : Icons.call_made, color: _blue, size: 17)),
-            title: Text(item.sender.isEmpty ? 'Неизвестный отправитель' : item.sender, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
-            subtitle: Text('${item.status}${item.timestamp.isEmpty ? '' : ' · ${item.timestamp}'}\n${item.body}', maxLines: 4, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11)),
-            isThreeLine: true,
-            trailing: IconButton(tooltip: 'Удалить из памяти SIM', icon: const Icon(Icons.delete_outline, size: 18), onPressed: () => _perform(context, () => c.deleteMessage(item.index))),
-          )),
-        const SizedBox(height: 4),
-        const Text('Примечание: папки «Черновики», «Важные», «Удалённые» и отчёты зависят от функций прошивки. Эта версия читает статусы REC/ STO из хранилища модема.', style: TextStyle(color: _muted, fontSize: 10)),
-      ])),
-    ]));
-  }
-}
-
-class CallsPage extends StatefulWidget {
-  const CallsPage({super.key});
-  @override
-  State<CallsPage> createState() => _CallsPageState();
-}
-
-class _CallsPageState extends State<CallsPage> {
-  final _number = TextEditingController();
-  @override
-  void dispose() { _number.dispose(); super.dispose(); }
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.watch<AppController>();
-    return _pageBody(ListView(children: [
-      _PageHeader('Вызовы', subtitle: 'Управление голосовой связью через AT-команды модема'),
-      const SizedBox(height: 14),
-      _Panel(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('Набор номера', style: TextStyle(fontWeight: FontWeight.w700)),
-        const SizedBox(height: 11),
-        Row(children: [
-          Expanded(child: TextField(controller: _number, keyboardType: TextInputType.phone, decoration: const InputDecoration(prefixIcon: Icon(Icons.phone), hintText: '+7 900 000-00-00'))),
-          const SizedBox(width: 9),
-          FilledButton.icon(onPressed: c.isConnected ? () => _perform(context, () => c.dial(_number.text.trim())) : null, icon: const Icon(Icons.call, size: 16), label: const Text('Позвонить')),
-          const SizedBox(width: 7),
-          OutlinedButton.icon(onPressed: c.isConnected ? () => _perform(context, c.hangUp) : null, icon: const Icon(Icons.call_end, size: 16), label: const Text('Отбой')),
-        ]),
-        const SizedBox(height: 10),
-        const Text('Важно: Huawei E173 обычно используется как 3G-модем. Голосовые вызовы могут быть отключены аппаратно, тарифом или прошивкой; наличие ATD-команды не гарантирует поддержку голосового режима.', style: TextStyle(color: _muted, fontSize: 11)),
-      ])),
-      const SizedBox(height: 14),
-      _Panel(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [const Expanded(child: Text('Текущий вызов (AT+CLCC)', style: TextStyle(fontWeight: FontWeight.w700))), TextButton.icon(onPressed: c.isConnected ? () => _perform(context, c.refreshCalls) : null, icon: const Icon(Icons.refresh, size: 15), label: const Text('Проверить'))]),
-        SelectableText(c.callsRaw.isEmpty ? 'Нет данных. AT+CLCC показывает активные вызовы, а не историю завершённых звонков.' : c.callsRaw, style: const TextStyle(fontFamily: 'Consolas', fontSize: 12)),
-      ])),
-    ]));
-  }
-}
 
 class ContactsPage extends StatefulWidget {
   const ContactsPage({super.key});
@@ -700,51 +479,6 @@ class StatisticsPage extends StatelessWidget {
   }
 }
 
-class BalancePage extends StatefulWidget {
-  const BalancePage({super.key});
-  @override
-  State<BalancePage> createState() => _BalancePageState();
-}
-
-class _BalancePageState extends State<BalancePage> {
-  late final TextEditingController _code;
-  @override
-  void initState() { super.initState(); _code = TextEditingController(text: context.read<AppController>().settings.balanceUssd); }
-  @override
-  void dispose() { _code.dispose(); super.dispose(); }
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.watch<AppController>();
-    final response = c.lastUssdResponse;
-    return _pageBody(ListView(children: [
-      _PageHeader('Баланс', subtitle: 'Ручная проверка счёта через USSD'),
-      const SizedBox(height: 14),
-      _Panel(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('USSD-команда', style: TextStyle(fontWeight: FontWeight.w700)),
-        const SizedBox(height: 11),
-        Row(children: [
-          Expanded(child: TextField(controller: _code, decoration: const InputDecoration(prefixIcon: Icon(Icons.dialpad), hintText: '*100#'))),
-          const SizedBox(width: 9),
-          FilledButton.icon(onPressed: c.isConnected ? () => _perform(context, () async { await c.runUssdManually(_code.text.trim()); }) : null, icon: const Icon(Icons.send, size: 16), label: const Text('Проверить')),
-        ]),
-      ])),
-      const SizedBox(height: 14),
-      _Panel(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('Ответ оператора', style: TextStyle(fontWeight: FontWeight.w700)),
-        const SizedBox(height: 10),
-        if (response.isEmpty) const Text('Ответ ещё не получен.', style: TextStyle(color: _muted, fontSize: 12)) else SelectableText(response, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-        if (response.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Text('Последняя проверка: ${DateTime.now().toLocal()}', style: const TextStyle(color: _muted, fontSize: 10)),
-        ],
-      ])),
-      const SizedBox(height: 14),
-      _Panel(child: const Text('Важно: USSD-коды различаются у операторов и тарифов. Команда по умолчанию *100# является примером, а не гарантированно правильным кодом вашей SIM-карты.', style: TextStyle(color: _muted, fontSize: 11))),
-    ]));
-  }
-}
-
 class LogsPage extends StatelessWidget {
   const LogsPage({super.key});
   @override
@@ -833,138 +567,6 @@ class _AtTerminalPageState extends State<AtTerminalPage> {
   Future<void> _send(BuildContext context, AppController c) async {
     await _perform(context, () => c.executeTerminalCommand(_command.text));
     if (mounted) setState(() {});
-  }
-}
-
-class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key});
-  @override
-  State<SettingsPage> createState() => _SettingsPageState();
-}
-
-class _SettingsPageState extends State<SettingsPage> {
-  late final TextEditingController _numberCode;
-  late final TextEditingController _balanceCode;
-  late final TextEditingController _recipient;
-  late final TextEditingController _smsText;
-  late final TextEditingController _networkWait;
-  late final TextEditingController _ussdTimeout;
-  late final TextEditingController _retries;
-  String _port = '';
-  int _baud = 115200;
-  int _dcs = 15;
-  bool _autoStart = false;
-  bool _autoConnect = true;
-  bool _statusReport = false;
-
-  @override
-  void initState() {
-    super.initState();
-    final s = context.read<AppController>().settings;
-    _numberCode = TextEditingController(text: s.numberUssd);
-    _balanceCode = TextEditingController(text: s.balanceUssd);
-    _recipient = TextEditingController(text: s.smsRecipient);
-    _smsText = TextEditingController(text: s.smsText);
-    _networkWait = TextEditingController(text: s.networkWaitSeconds.toString());
-    _ussdTimeout = TextEditingController(text: s.ussdTimeoutSeconds.toString());
-    _retries = TextEditingController(text: s.retryCount.toString());
-    _port = s.preferredPort;
-    _baud = s.baudRate;
-    _dcs = s.ussdDcs;
-    _autoStart = s.autoStart;
-    _autoConnect = s.autoConnect;
-    _statusReport = s.smsRequireNetworkAck;
-  }
-
-  @override
-  void dispose() {
-    _numberCode.dispose(); _balanceCode.dispose(); _recipient.dispose(); _smsText.dispose();
-    _networkWait.dispose(); _ussdTimeout.dispose(); _retries.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.watch<AppController>();
-    return _pageBody(ListView(children: [
-      const _PageHeader('Настройки', subtitle: 'Параметры соединения, USSD, SMS и автоматического сценария'),
-      const SizedBox(height: 14),
-      _Panel(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('Подключение к модему', style: TextStyle(fontWeight: FontWeight.w700)),
-        const SizedBox(height: 11),
-        DropdownButtonFormField<String>(value: _port.isEmpty ? null : _port, decoration: const InputDecoration(labelText: 'Предпочтительный COM-порт', prefixIcon: Icon(Icons.usb)), hint: const Text('Автоматический поиск'), items: [
-          const DropdownMenuItem(value: '', child: Text('Автоматический поиск')),
-          if (_port.isNotEmpty && !c.availablePorts.any((item) => item.name == _port))
-            DropdownMenuItem(value: _port, child: Text('$_port · сейчас не найден')),
-          ...c.availablePorts.map((p) => DropdownMenuItem(value: p.name, child: Text('${p.name} · ${p.friendlyName.isEmpty ? 'COM-порт' : p.friendlyName}'))),
-        ], onChanged: (value) => setState(() => _port = value ?? '')),
-        const SizedBox(height: 10),
-        DropdownButtonFormField<int>(value: _baud, decoration: const InputDecoration(labelText: 'Скорость порта (baud)'), items: const [9600, 19200, 38400, 57600, 115200].map((v) => DropdownMenuItem(value: v, child: Text('$v'))).toList(), onChanged: (value) => setState(() => _baud = value ?? 115200)),
-        SwitchListTile.adaptive(contentPadding: EdgeInsets.zero, value: _autoConnect, onChanged: (value) => setState(() => _autoConnect = value), title: const Text('Автоматически подключаться при появлении модема', style: TextStyle(fontSize: 12))),
-      ])),
-      const SizedBox(height: 12),
-      _Panel(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('USSD и автоматическая операция', style: TextStyle(fontWeight: FontWeight.w700)),
-        const SizedBox(height: 10),
-        TextField(controller: _numberCode, decoration: const InputDecoration(labelText: 'USSD для определения номера', hintText: '*161#')),
-        const SizedBox(height: 9),
-        TextField(controller: _balanceCode, decoration: const InputDecoration(labelText: 'USSD для проверки баланса', hintText: '*100#')),
-        const SizedBox(height: 9),
-        DropdownButtonFormField<int>(value: _dcs, decoration: const InputDecoration(labelText: 'DCS для USSD'), items: const [15, 72,  UCS2DcsValue].map((v) => DropdownMenuItem(value: v, child: Text(v == 72 ? '72 — UCS-2 (часто для кириллицы)' : v == 15 ? '15 — стандартная таблица' : '$v'))).toList(), onChanged: (value) => setState(() => _dcs = value ?? 15)),
-        const SizedBox(height: 8),
-        SwitchListTile.adaptive(contentPadding: EdgeInsets.zero, value: _autoStart, onChanged: (value) => setState(() => _autoStart = value), title: const Text('Автозапуск после регистрации в сети', style: TextStyle(fontSize: 12)), subtitle: const Text('Один запуск на каждое подключение модема.', style: TextStyle(fontSize: 10))),
-      ])),
-      const SizedBox(height: 12),
-      _Panel(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('SMS', style: TextStyle(fontWeight: FontWeight.w700)),
-        const SizedBox(height: 10),
-        TextField(controller: _recipient, decoration: const InputDecoration(labelText: 'Номер получателя', hintText: '+79000000000')),
-        const SizedBox(height: 9),
-        TextField(controller: _smsText, minLines: 2, maxLines: 5, decoration: const InputDecoration(labelText: 'Текст сообщения', alignLabelWithHint: true)),
-        SwitchListTile.adaptive(contentPadding: EdgeInsets.zero, value: _statusReport, onChanged: (value) => setState(() => _statusReport = value), title: const Text('Запрашивать сетевой отчёт о доставке', style: TextStyle(fontSize: 12)), subtitle: const Text('Отчёт может не поддерживаться оператором или прошивкой. Сам ответ +CMGS не подтверждает доставку.', style: TextStyle(fontSize: 10))),
-      ])),
-      const SizedBox(height: 12),
-      _Panel(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('Таймауты и повторы', style: TextStyle(fontWeight: FontWeight.w700)),
-        const SizedBox(height: 10),
-        _numberField(_networkWait, 'Ожидание сети, секунд'),
-        const SizedBox(height: 9), _numberField(_ussdTimeout, 'Таймаут USSD, секунд'),
-        const SizedBox(height: 9), _numberField(_retries, 'Количество повторов USSD (0–5)'),
-      ])),
-      const SizedBox(height: 14),
-      Row(children: [
-        const Expanded(child: Text('Настройки сохраняются на этом компьютере.', style: TextStyle(color: _muted, fontSize: 10))),
-        FilledButton.icon(onPressed: () => _save(context), icon: const Icon(Icons.save, size: 16), label: const Text('Сохранить настройки')),
-      ]),
-    ]));
-  }
-
-  Widget _numberField(TextEditingController controller, String label) => TextField(controller: controller, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: label));
-
-  Future<void> _save(BuildContext context) async {
-    final networkWait = int.tryParse(_networkWait.text) ?? 180;
-    final timeout = int.tryParse(_ussdTimeout.text) ?? 45;
-    final retries = int.tryParse(_retries.text) ?? 1;
-    if (networkWait < 10 || networkWait > 1800 || timeout < 5 || timeout > 180 || retries < 0 || retries > 5) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Проверьте таймауты и количество повторов.')));
-      return;
-    }
-    final settings = AppSettings(
-      preferredPort: _port,
-      baudRate: _baud,
-      numberUssd: _numberCode.text.trim(),
-      balanceUssd: _balanceCode.text.trim(),
-      smsRecipient: _recipient.text.trim(),
-      smsText: _smsText.text,
-      ussdDcs: _dcs,
-      autoStart: _autoStart,
-      autoConnect: _autoConnect,
-      networkWaitSeconds: networkWait,
-      ussdTimeoutSeconds: timeout,
-      retryCount: retries,
-      smsRequireNetworkAck: _statusReport,
-    );
-    await _perform(context, () => context.read<AppController>().updateSettings(settings), successMessage: 'Настройки сохранены');
   }
 }
 

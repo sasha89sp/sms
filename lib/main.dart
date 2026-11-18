@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tray_manager/tray_manager.dart';
+import 'package:window_manager/window_manager.dart';
 
 import 'app_controller.dart';
 import 'screens/home_shell.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await windowManager.ensureInitialized();
+    // Закрытие окна перехватывается: окно сворачивается в трей.
+    await windowManager.setPreventClose(true);
+  } catch (_) {
+    // Без оконного плагина программа работает как обычно.
+  }
   runApp(const HuaweiModemManagerApp());
 }
 
@@ -16,8 +25,83 @@ class HuaweiModemManagerApp extends StatefulWidget {
   State<HuaweiModemManagerApp> createState() => _HuaweiModemManagerAppState();
 }
 
-class _HuaweiModemManagerAppState extends State<HuaweiModemManagerApp> {
+class _HuaweiModemManagerAppState extends State<HuaweiModemManagerApp>
+    with TrayListener, WindowListener {
   late final Future<AppController> _controllerFuture = AppController.create();
+
+  @override
+  void initState() {
+    super.initState();
+    trayManager.addListener(this);
+    windowManager.addListener(this);
+    _initTray();
+  }
+
+  Future<void> _initTray() async {
+    try {
+      await trayManager.setIcon('assets/app_icon.ico');
+      await trayManager.setToolTip('Huawei Modem Manager');
+      await trayManager.setContextMenu(Menu(items: [
+        MenuItem(key: 'show_window', label: 'Показать окно'),
+        MenuItem.separator(),
+        MenuItem(key: 'exit_app', label: 'Выход'),
+      ]));
+    } catch (_) {
+      // Трей недоступен — закрытие окна тогда завершает программу.
+    }
+  }
+
+  Future<void> _showWindow() async {
+    await windowManager.show();
+    await windowManager.focus();
+  }
+
+  Future<void> _exitApp() async {
+    try {
+      final controller = await _controllerFuture;
+      await controller.modem.disconnect();
+    } catch (_) {}
+    try {
+      await trayManager.destroy();
+    } catch (_) {}
+    await windowManager.setPreventClose(false);
+    await windowManager.destroy();
+  }
+
+  @override
+  void onWindowClose() async {
+    var toTray = true;
+    try {
+      final controller = await _controllerFuture;
+      toTray = controller.settings.closeToTray;
+    } catch (_) {
+      toTray = false;
+    }
+    if (toTray) {
+      await windowManager.hide();
+    } else {
+      await _exitApp();
+    }
+  }
+
+  @override
+  void onTrayIconMouseDown() {
+    _showWindow();
+  }
+
+  @override
+  void onTrayIconRightMouseDown() {
+    trayManager.popUpContextMenu();
+  }
+
+  @override
+  void onTrayMenuItemClick(MenuItem menuItem) {
+    if (menuItem.key == 'show_window') {
+      _showWindow();
+    } else if (menuItem.key == 'exit_app') {
+      _exitApp();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -88,6 +172,8 @@ class _HuaweiModemManagerAppState extends State<HuaweiModemManagerApp> {
 
   @override
   void dispose() {
+    trayManager.removeListener(this);
+    windowManager.removeListener(this);
     _controllerFuture.then((controller) => controller.dispose());
     super.dispose();
   }
