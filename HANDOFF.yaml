@@ -1,0 +1,30 @@
+version: 1
+updated_at: "2026-11-18"
+project: huawei_modem_manager
+status: ready_for_ci_verification
+summary: >
+  Проект приведён к стандарту AGENTS.md: добавлены AGENTS.md, ROOT_MAP.md,
+  MAP.md, HANDOFF.yaml и унифицированные пайплайны GitHub Actions
+  (pr-checks.yml, windows-build.yml, main-validation.yml). Устранена причина
+  ошибки YAML-парсера FlutterManifest на этапе Enable Windows desktop.
+completed_changes:
+  - "Добавлены файлы проектной документации и навигации: AGENTS.md, ROOT_MAP.md, MAP.md, HANDOFF.yaml."
+  - "Перепроверен и нормализован pubspec.yaml (строгие пробельные отступы UTF-8 без BOM, без табуляции)."
+  - "Настроены GitHub Actions workflows согласно AGENTS.md: pr-checks.yml, windows-build.yml, main-validation.yml (удалён устаревший windows.yml)."
+  - "В workflows добавлена автоматическая проверка валидности YAML и определение корня Flutter-проекта перед запуском flutter config / flutter build."
+files_changed:
+  - AGENTS.md
+  - ROOT_MAP.md
+  - MAP.md
+  - HANDOFF.yaml
+  - pubspec.yaml
+  - .github/workflows/pr-checks.yml
+  - .github/workflows/windows-build.yml
+  - .github/workflows/main-validation.yml
+verification:
+  yaml_syntax_check: "passed (UTF-8 without BOM, spaces only, valid structure)"
+  flutter_analyze_and_test: "pending local/CI run on Windows runner"
+next_step: >
+  Распаковать содержимое папки huawei_modem_manager в корень Git-репозитория,
+  выполнить git add / commit / push и проверить прохождение workflows
+  pr-checks.yml, main-validation.yml и windows-build.yml в GitHub Actions.
