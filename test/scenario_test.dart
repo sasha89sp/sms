@@ -1,5 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
+<<<<<<< HEAD
 import 'package:huawei_modem_manager/models/excel_fields.dart';
+=======
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
 import 'package:huawei_modem_manager/models/scenario.dart';
 import 'package:huawei_modem_manager/services/excel_exporter.dart';
 import 'package:huawei_modem_manager/services/sms_pdu.dart';
@@ -118,6 +121,7 @@ void main() {
     });
   });
 
+<<<<<<< HEAD
   group('Excel layout', () {
     test('resolves all columns including steps when selection is empty', () {
       final ids = ExcelFields.resolve(const [], 2);
@@ -166,6 +170,12 @@ void main() {
       expect(back.waitSms, isTrue);
       expect(back.smsTimeout, 90);
       expect(back.smsSender, 'MTS');
+=======
+  group('ExcelExporter', () {
+    test('makes valid sheet names', () {
+      expect(ExcelExporter.sheetName('a:b/c', 1), 'a b c');
+      expect(ExcelExporter.sheetName('x' * 50, 2).length, lessThanOrEqualTo(31));
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
     });
   });
 }

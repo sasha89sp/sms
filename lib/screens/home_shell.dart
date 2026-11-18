@@ -226,7 +226,11 @@ class _HomeShellState extends State<HomeShell> {
                 ),
                 const Padding(
                   padding: EdgeInsets.only(bottom: 15),
+<<<<<<< HEAD
                   child: Text('Версия 2.1.0',
+=======
+                  child: Text('Версия 2.0.0',
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Color(0xFF667990), fontSize: 10)),
                 ),

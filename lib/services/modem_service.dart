@@ -15,7 +15,10 @@ class ModemService {
 
   // Нештатные сообщения модема (URC), замеченные при чтении порта.
   bool _smsHint = false;
+<<<<<<< HEAD
   int smsHintCount = 0;
+=======
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
   bool _ringing = false;
   String _incomingNumber = '';
   bool _callEndedHint = false;
@@ -734,10 +737,14 @@ class ModemService {
 
   void _scanUrc(String chunk) {
     final upper = chunk.toUpperCase();
+<<<<<<< HEAD
     if (upper.contains('+CMTI:')) {
       _smsHint = true;
       smsHintCount++;
     }
+=======
+    if (upper.contains('+CMTI:')) _smsHint = true;
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
     if (RegExp(r'(^|\n)\s*RING').hasMatch(upper) || upper.contains('+CLIP:')) {
       _ringing = true;
     }

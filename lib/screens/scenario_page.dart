@@ -288,7 +288,10 @@ class _ScenariosPageState extends State<ScenariosPage> {
                     index: index,
                     step: step,
                     saved: c.settings.savedUssd,
+<<<<<<< HEAD
                     phrases: c.phrases,
+=======
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
                     onChanged: (value) => _update((s) {
                       final list = [...s.steps];
                       list[index] = value;
@@ -300,7 +303,22 @@ class _ScenariosPageState extends State<ScenariosPage> {
                     }),
                     onDuplicate: () => _update((s) {
                       final list = [...s.steps];
+<<<<<<< HEAD
                       list.insert(index + 1, step.duplicate());
+=======
+                      list.insert(
+                        index + 1,
+                        ScenarioStep(
+                          id: newId(),
+                          type: step.type,
+                          code: step.code,
+                          recipient: step.recipient,
+                          text: step.text,
+                          seconds: step.seconds,
+                          digits: step.digits,
+                        ),
+                      );
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
                       return s.copyWith(steps: list);
                     }),
                   );
@@ -358,7 +376,10 @@ class _StepEditor extends StatefulWidget {
     required this.index,
     required this.step,
     required this.saved,
+<<<<<<< HEAD
     required this.phrases,
+=======
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
     required this.onChanged,
     required this.onDelete,
     required this.onDuplicate,
@@ -367,7 +388,10 @@ class _StepEditor extends StatefulWidget {
   final int index;
   final ScenarioStep step;
   final List<SavedUssd> saved;
+<<<<<<< HEAD
   final List<String> phrases;
+=======
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
   final ValueChanged<ScenarioStep> onChanged;
   final VoidCallback onDelete;
   final VoidCallback onDuplicate;
@@ -382,8 +406,11 @@ class _StepEditorState extends State<_StepEditor> {
   late final TextEditingController _text = TextEditingController(text: widget.step.text);
   late final TextEditingController _seconds = TextEditingController(text: widget.step.seconds.toString());
   late final TextEditingController _digits = TextEditingController(text: widget.step.digits);
+<<<<<<< HEAD
   late final TextEditingController _smsTimeout = TextEditingController(text: widget.step.smsTimeout.toString());
   late final TextEditingController _smsSender = TextEditingController(text: widget.step.smsSender);
+=======
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
 
   @override
   void dispose() {
@@ -392,8 +419,11 @@ class _StepEditorState extends State<_StepEditor> {
     _text.dispose();
     _seconds.dispose();
     _digits.dispose();
+<<<<<<< HEAD
     _smsTimeout.dispose();
     _smsSender.dispose();
+=======
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
     super.dispose();
   }
 
@@ -404,6 +434,7 @@ class _StepEditorState extends State<_StepEditor> {
       text: _text.text,
       seconds: int.tryParse(_seconds.text.trim()) ?? 0,
       digits: _digits.text,
+<<<<<<< HEAD
       smsTimeout: int.tryParse(_smsTimeout.text.trim()) ?? 60,
       smsSender: _smsSender.text,
     ));
@@ -477,6 +508,11 @@ class _StepEditorState extends State<_StepEditor> {
     return const SizedBox.shrink();
   }
 
+=======
+    ));
+  }
+
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
   Widget _field(TextEditingController controller, String label,
       {String? hint, bool number = false, int maxLines = 1, Widget? suffix}) {
     return TextField(
@@ -585,12 +621,16 @@ class _StepEditorState extends State<_StepEditor> {
           ),
         ),
         const SizedBox(width: 8),
+<<<<<<< HEAD
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(crossAxisAlignment: CrossAxisAlignment.start, children: _fields()),
             _extras(),
           ]),
         ),
+=======
+        ..._fields(),
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
         IconButton(tooltip: 'Дублировать шаг', onPressed: widget.onDuplicate, icon: const Icon(Icons.copy, size: 18)),
         IconButton(tooltip: 'Удалить шаг', onPressed: widget.onDelete, icon: const Icon(Icons.close, size: 18)),
       ]),
@@ -734,6 +774,7 @@ class _ExcelPanel extends StatelessWidget {
             padding: const EdgeInsets.only(top: 4),
             child: Text(c.excelMessage, style: const TextStyle(fontSize: 11, color: Color(0xFF16845B))),
           ),
+<<<<<<< HEAD
         Text(
           c.settings.excelColumns.isEmpty
               ? 'Столбцы: все (в стандартном порядке).'
@@ -751,6 +792,16 @@ class _ExcelPanel extends StatelessWidget {
             label: const Text('Столбцы таблицы'),
           ),
           FilledButton.icon(
+=======
+        SwitchListTile.adaptive(
+          contentPadding: EdgeInsets.zero,
+          value: c.settings.excelIncludeDate,
+          onChanged: (value) => _perform(context, () => c.updateSettings(c.settings.copyWith(excelIncludeDate: value))),
+          title: const Text('Добавлять дату и время выполнения', style: TextStyle(fontSize: 12)),
+        ),
+        Wrap(spacing: 8, runSpacing: 8, children: [
+          FilledButton.icon(
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
             onPressed: () => _perform(context, c.openExcelFile),
             icon: const Icon(Icons.table_chart, size: 16),
             label: const Text('Открыть Excel'),
@@ -781,6 +832,7 @@ class _ExcelPanel extends StatelessWidget {
     );
   }
 }
+<<<<<<< HEAD
 
 
 /// Выбор и порядок столбцов Excel. Таблица всегда одна — лист «Результаты».
@@ -1037,3 +1089,5 @@ class _ActionRowState extends State<_ActionRow> {
     );
   }
 }
+=======
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782

@@ -36,6 +36,7 @@ extension StepTypeInfo on StepType {
 int _idCounter = 0;
 String newId() => '${DateTime.now().microsecondsSinceEpoch}_${_idCounter++}';
 
+<<<<<<< HEAD
 /// Действие во время звонка: на N-й секунде после ответа.
 class CallAction {
   const CallAction({required this.at, required this.isPhrase, this.value = ''});
@@ -63,6 +64,8 @@ class CallAction {
       );
 }
 
+=======
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
 class ScenarioStep {
   const ScenarioStep({
     required this.id,
@@ -72,10 +75,13 @@ class ScenarioStep {
     this.text = '',
     this.seconds = 5,
     this.digits = '',
+<<<<<<< HEAD
     this.waitSms = true,
     this.smsTimeout = 60,
     this.smsSender = '',
     this.actions = const [],
+=======
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
   });
 
   factory ScenarioStep.create(StepType type) {
@@ -115,6 +121,7 @@ class ScenarioStep {
   /// Цифры для DTMF.
   final String digits;
 
+<<<<<<< HEAD
   /// Баланс: если в ответе USSD нет суммы — ждать SMS с балансом.
   final bool waitSms;
 
@@ -127,6 +134,8 @@ class ScenarioStep {
   /// Звонок: действия по секундам после соединения.
   final List<CallAction> actions;
 
+=======
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
   ScenarioStep copyWith({
     StepType? type,
     String? code,
@@ -134,10 +143,13 @@ class ScenarioStep {
     String? text,
     int? seconds,
     String? digits,
+<<<<<<< HEAD
     bool? waitSms,
     int? smsTimeout,
     String? smsSender,
     List<CallAction>? actions,
+=======
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
   }) =>
       ScenarioStep(
         id: id,
@@ -147,6 +159,7 @@ class ScenarioStep {
         text: text ?? this.text,
         seconds: seconds ?? this.seconds,
         digits: digits ?? this.digits,
+<<<<<<< HEAD
         waitSms: waitSms ?? this.waitSms,
         smsTimeout: smsTimeout ?? this.smsTimeout,
         smsSender: smsSender ?? this.smsSender,
@@ -166,6 +179,8 @@ class ScenarioStep {
         smsTimeout: smsTimeout,
         smsSender: smsSender,
         actions: List<CallAction>.of(actions),
+=======
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
       );
 
   /// Краткое описание для списка.
@@ -194,10 +209,13 @@ class ScenarioStep {
         'text': text,
         'seconds': seconds,
         'digits': digits,
+<<<<<<< HEAD
         'waitSms': waitSms,
         'smsTimeout': smsTimeout,
         'smsSender': smsSender,
         'actions': actions.map((item) => item.toJson()).toList(),
+=======
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
       };
 
   factory ScenarioStep.fromJson(Map<String, dynamic> json) => ScenarioStep(
@@ -208,6 +226,7 @@ class ScenarioStep {
         text: json['text'] as String? ?? '',
         seconds: (json['seconds'] as num?)?.toInt() ?? 5,
         digits: json['digits'] as String? ?? '',
+<<<<<<< HEAD
         waitSms: json['waitSms'] as bool? ?? true,
         smsTimeout: (json['smsTimeout'] as num?)?.toInt() ?? 60,
         smsSender: json['smsSender'] as String? ?? '',
@@ -215,6 +234,8 @@ class ScenarioStep {
             .whereType<Map>()
             .map((item) => CallAction.fromJson(Map<String, dynamic>.from(item)))
             .toList(),
+=======
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
       );
 }
 
@@ -354,18 +375,27 @@ class CellData {
 }
 
 /// Одна строка Excel — результат одного запуска сценария.
+<<<<<<< HEAD
 /// [fields] — «сырые» результаты по идентификаторам полей (см. ExcelFields).
+=======
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
 class RunRow {
   const RunRow({
     required this.startedAt,
     required this.scenarioName,
+<<<<<<< HEAD
     required this.fields,
+=======
+    required this.columns,
+    required this.cells,
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
     this.balanceStatus = '',
     this.success = true,
   });
 
   final DateTime startedAt;
   final String scenarioName;
+<<<<<<< HEAD
   final Map<String, CellData> fields;
   final String balanceStatus;
   final bool success;
@@ -416,6 +446,24 @@ class RunRow {
     }
     return result;
   }
+=======
+  final List<String> columns;
+  final List<CellData> cells;
+  final String balanceStatus;
+  final bool success;
+
+  static String encodeColumns(List<String> columns) => jsonEncode(columns);
+  static String encodeCells(List<CellData> cells) =>
+      jsonEncode(cells.map((cell) => cell.toJson()).toList());
+
+  static List<String> decodeColumns(String raw) =>
+      (jsonDecode(raw) as List).map((e) => '$e').toList();
+
+  static List<CellData> decodeCells(String raw) => (jsonDecode(raw) as List)
+      .whereType<Map>()
+      .map((item) => CellData.fromJson(Map<String, dynamic>.from(item)))
+      .toList();
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
 }
 
 enum LiveStatus { pending, running, ok, error, skipped }

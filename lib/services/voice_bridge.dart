@@ -142,6 +142,7 @@ class VoiceBridge {
 
 /// Загрузка WAV-файла и приведение к PCM 8 кГц / 16 бит / моно.
 class WavLoader {
+<<<<<<< HEAD
   /// Упаковывает PCM (8000 Гц, 16 бит, моно) в WAV-файл.
   static Uint8List encode(Uint8List pcm) {
     final header = ByteData(44);
@@ -170,6 +171,8 @@ class WavLoader {
     return result.toBytes();
   }
 
+=======
+>>>>>>> a25f356dea16092df8cedcd76460a90b086cf782
   static Future<Uint8List> loadAs8kMono(String path) async {
     final bytes = await File(path).readAsBytes();
     return convert(bytes);
