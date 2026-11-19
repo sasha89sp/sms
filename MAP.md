@@ -22,7 +22,7 @@
 - `lib/services/app_database.dart` — локальная БД SQLite (`sqflite_common_ffi`): таблицы `operations`, `logs`, `scenario_runs`, `sims`, `sms_store`.
 - `lib/services/app_paths.dart` — портативные пути хранения данных (`UserData/` рядом с `.exe` с fallback в `ApplicationSupportDirectory`).
 - `lib/services/settings_store.dart` — атомарное сохранение `settings.json`.
-- `lib/services/excel_exporter.dart` — генерация `.xlsx` отчёта (лист «Результаты», цветовая подсветка сверки баланса, резервное сохранение при блокировке файла).
+- `lib/services/excel_exporter.dart` — генерация `.xlsx` отчёта (лист «Результаты», пользовательские заголовки столбцов, цветовая подсветка сверки баланса, резервное сохранение при блокировке файла).
 
 ## Экранные формы (`lib/screens/`)
 - `lib/screens/home_shell.dart` — боковая навигация и верхняя панель статуса подключения.

@@ -208,6 +208,48 @@ class _SettingsPageState extends State<SettingsPage> {
           Text('Данные программы: ${c.paths.dataDir}', style: const TextStyle(color: _muted, fontSize: 10)),
         ]),
       ),
+      const SizedBox(height: 12),
+      const _Panel(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('О программе и история версий', style: TextStyle(fontWeight: FontWeight.w700)),
+          SizedBox(height: 4),
+          Text('Huawei Modem Manager · версия 2.1.7+1 (Windows)',
+              style: TextStyle(color: _muted, fontSize: 11)),
+          SizedBox(height: 8),
+          _VersionHistoryEntry(
+            version: 'v2.1.7',
+            changes: 'В разделе «Настройки» добавлен блок «О программе и история версий».',
+          ),
+          _VersionHistoryEntry(
+            version: 'v2.1.6',
+            changes: 'Актуальная версия отображается в заголовке окна, вверху меню и внизу панели.',
+          ),
+          _VersionHistoryEntry(
+            version: 'v2.1.5',
+            changes: 'При успешном завершении сценария выводятся дата и время окончания.',
+          ),
+          _VersionHistoryEntry(
+            version: 'v2.1.4',
+            changes: 'Иконка приложения подключена к окну, панели задач и генератору runner.',
+          ),
+          _VersionHistoryEntry(
+            version: 'v2.1.3',
+            changes: 'Добавлены выборочное/массовое выделение SMS и групповые действия.',
+          ),
+          _VersionHistoryEntry(
+            version: 'v2.1.2',
+            changes: 'Добавлено звуковое уведомление при получении SMS с регулировкой громкости.',
+          ),
+          _VersionHistoryEntry(
+            version: 'v2.1.1',
+            changes: 'Раздельное извлечение баланса и номера из одного USSD-ответа, кэш ответа в прогоне и столбец «Номер SIM».',
+          ),
+          _VersionHistoryEntry(
+            version: 'v2.1.0',
+            changes: 'Базовая версия 2.1.0+1 с очищенной структурой и пайплайнами CI.',
+          ),
+        ]),
+      ),
       const SizedBox(height: 14),
       Row(children: [
         const Expanded(
@@ -251,5 +293,34 @@ class _SettingsPageState extends State<SettingsPage> {
       closeToTray: _closeToTray,
     );
     await _perform(context, () => c.updateSettings(settings), successMessage: 'Настройки сохранены');
+  }
+}
+
+class _VersionHistoryEntry extends StatelessWidget {
+  const _VersionHistoryEntry({required this.version, required this.changes});
+
+  final String version;
+  final String changes;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 5),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        SizedBox(
+          width: 58,
+          child: Text(
+            version,
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            changes,
+            style: const TextStyle(color: _muted, fontSize: 11),
+          ),
+        ),
+      ]),
+    );
   }
 }

@@ -18,6 +18,8 @@ class AppSettings {
     this.scenarios = const [],
     this.savedUssd = const [],
     this.excelColumns = const [],
+    this.excelColumnTitles = const {},
+    this.excelColumnPresets = const {},
     this.smsMinBalance = 0,
     this.smsAutoReceive = true,
     this.smsPollSeconds = 15,
@@ -51,6 +53,8 @@ class AppSettings {
   /// Добавлять в Excel столбец с датой и временем запуска.
   /// Столбцы Excel по порядку; пусто — все.
   final List<String> excelColumns;
+  final Map<String, String> excelColumnTitles;
+  final Map<String, List<String>> excelColumnPresets;
 
   /// Если известный баланс ниже этой суммы — SMS не отправляется,
   /// шаг помечается «Недостаточно средств». 0 — проверка выключена.
@@ -84,6 +88,8 @@ class AppSettings {
     List<Scenario>? scenarios,
     List<SavedUssd>? savedUssd,
     List<String>? excelColumns,
+    Map<String, String>? excelColumnTitles,
+    Map<String, List<String>>? excelColumnPresets,
     double? smsMinBalance,
     bool? smsAutoReceive,
     int? smsPollSeconds,
@@ -111,6 +117,8 @@ class AppSettings {
       scenarios: scenarios ?? this.scenarios,
       savedUssd: savedUssd ?? this.savedUssd,
       excelColumns: excelColumns ?? this.excelColumns,
+      excelColumnTitles: excelColumnTitles ?? this.excelColumnTitles,
+      excelColumnPresets: excelColumnPresets ?? this.excelColumnPresets,
       smsMinBalance: smsMinBalance ?? this.smsMinBalance,
       smsAutoReceive: smsAutoReceive ?? this.smsAutoReceive,
       smsPollSeconds: smsPollSeconds ?? this.smsPollSeconds,
@@ -139,6 +147,8 @@ class AppSettings {
         'scenarios': scenarios.map((item) => item.toJson()).toList(),
         'savedUssd': savedUssd.map((item) => item.toJson()).toList(),
         'excelColumns': excelColumns,
+        'excelColumnTitles': excelColumnTitles,
+        'excelColumnPresets': excelColumnPresets,
         'smsMinBalance': smsMinBalance,
         'smsAutoReceive': smsAutoReceive,
         'smsPollSeconds': smsPollSeconds,
@@ -172,6 +182,20 @@ class AppSettings {
             .map((item) => SavedUssd.fromJson(Map<String, dynamic>.from(item)))
             .toList(),
         excelColumns: ((json['excelColumns'] as List?) ?? const []).map((e) => '$e').toList(),
+        excelColumnTitles: json['excelColumnTitles'] is Map
+            ? {
+                for (final entry in (json['excelColumnTitles'] as Map).entries)
+                  if ('${entry.value}'.trim().isNotEmpty)
+                    '${entry.key}': '${entry.value}'.trim(),
+              }
+            : const {},
+        excelColumnPresets: json['excelColumnPresets'] is Map
+            ? {
+                for (final entry in (json['excelColumnPresets'] as Map).entries)
+                  if (entry.value is List)
+                    '${entry.key}': (entry.value as List).map((e) => '$e').toList(),
+              }
+            : const {},
         smsMinBalance: (json['smsMinBalance'] as num?)?.toDouble() ?? 0,
         smsAutoReceive: json['smsAutoReceive'] as bool? ?? true,
         smsPollSeconds: (json['smsPollSeconds'] as num?)?.toInt() ?? 15,

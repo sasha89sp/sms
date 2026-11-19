@@ -783,7 +783,7 @@ class _ExcelPanel extends StatelessWidget {
 }
 
 
-/// Выбор и порядок столбцов Excel. Таблица всегда одна — лист «Результаты».
+/// Выбор, порядок, заголовки и пресеты столбцов Excel. Лист «Результаты».
 class _ColumnsDialog extends StatefulWidget {
   const _ColumnsDialog({required this.controller});
   final AppController controller;
@@ -795,7 +795,10 @@ class _ColumnsDialog extends StatefulWidget {
 class _ColumnsDialogState extends State<_ColumnsDialog> {
   late List<String> _selected;
   late bool _all;
+  late Map<String, String> _customTitles;
+  late Map<String, List<String>> _presets;
   final _stepController = TextEditingController();
+  final _presetNameController = TextEditingController();
 
   @override
   void initState() {
@@ -803,12 +806,24 @@ class _ColumnsDialogState extends State<_ColumnsDialog> {
     final saved = widget.controller.settings.excelColumns;
     _all = saved.isEmpty;
     _selected = saved.isEmpty ? List<String>.of(ExcelFields.base) : List<String>.of(saved);
+    _customTitles = Map<String, String>.from(widget.controller.settings.excelColumnTitles);
+    _presets = {
+      for (final entry in widget.controller.settings.excelColumnPresets.entries)
+        entry.key: List<String>.of(entry.value),
+    };
   }
 
   @override
   void dispose() {
     _stepController.dispose();
+    _presetNameController.dispose();
     super.dispose();
+  }
+
+  String _displayTitle(String id) {
+    final custom = _customTitles[id]?.trim();
+    if (custom != null && custom.isNotEmpty) return custom;
+    return ExcelFields.title(id);
   }
 
   void _toggle(String id, bool on) {
@@ -831,13 +846,64 @@ class _ColumnsDialogState extends State<_ColumnsDialog> {
     });
   }
 
+  Future<void> _editColumnTitle(String id) async {
+    final ctrl = TextEditingController(text: _customTitles[id] ?? '');
+    final result = await showDialog<String?>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('Заголовок: ${ExcelFields.title(id)}'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          decoration: InputDecoration(
+            labelText: 'Своё название столбца',
+            hintText: ExcelFields.title(id),
+          ),
+          onSubmitted: (v) => Navigator.pop(dialogContext, v.trim()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, ''),
+            child: const Text('Сбросить'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, null),
+            child: const Text('Отмена'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, ctrl.text.trim()),
+            child: const Text('Применить'),
+          ),
+        ],
+      ),
+    );
+    ctrl.dispose();
+    if (result == null || !mounted) return;
+    setState(() {
+      if (result.isEmpty) {
+        _customTitles.remove(id);
+      } else {
+        _customTitles[id] = result;
+      }
+    });
+  }
+
+  void _savePreset() {
+    final name = _presetNameController.text.trim();
+    if (name.isEmpty) return;
+    setState(() {
+      _presets[name] = _all ? const <String>[] : List<String>.of(_selected);
+      _presetNameController.clear();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final available = ExcelFields.base.where((id) => !_selected.contains(id)).toList();
     return AlertDialog(
       title: const Text('Столбцы таблицы Excel'),
       content: SizedBox(
-        width: 460,
+        width: 500,
         child: SingleChildScrollView(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             SwitchListTile.adaptive(
@@ -848,13 +914,33 @@ class _ColumnsDialogState extends State<_ColumnsDialog> {
               subtitle: const Text('Результаты шагов добавляются автоматически.', style: TextStyle(fontSize: 10)),
             ),
             if (!_all) ...[
-              const Text('Порядок столбцов:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
+              Row(children: [
+                const Expanded(
+                  child: Text('Порядок и заголовки столбцов:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
+                ),
+                TextButton(
+                  onPressed: () => setState(() {
+                    _selected = List<String>.of(ExcelFields.base);
+                    _customTitles.clear();
+                  }),
+                  child: const Text('По умолчанию', style: TextStyle(fontSize: 11)),
+                ),
+              ]),
               for (var i = 0; i < _selected.length; i++)
                 ListTile(
+                  key: ValueKey('col_${_selected[i]}_$i'),
                   dense: true,
                   contentPadding: EdgeInsets.zero,
-                  title: Text('${i + 1}. ${ExcelFields.title(_selected[i])}', style: const TextStyle(fontSize: 12)),
+                  title: Text(
+                    '${i + 1}. ${_displayTitle(_selected[i])}${_customTitles.containsKey(_selected[i]) ? ' (${ExcelFields.title(_selected[i])})' : ''}',
+                    style: const TextStyle(fontSize: 12),
+                  ),
                   trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                    IconButton(
+                      tooltip: 'Своё название столбца',
+                      icon: const Icon(Icons.edit_outlined, size: 16),
+                      onPressed: () => _editColumnTitle(_selected[i]),
+                    ),
                     IconButton(
                       icon: const Icon(Icons.arrow_upward, size: 16),
                       onPressed: i == 0
@@ -880,7 +966,7 @@ class _ColumnsDialogState extends State<_ColumnsDialog> {
                   ]),
                 ),
               const Divider(),
-              const Text('Добавить:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
+              const Text('Добавить поле:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
               Wrap(spacing: 6, runSpacing: 4, children: [
                 for (final id in available)
                   ActionChip(
@@ -903,6 +989,38 @@ class _ColumnsDialogState extends State<_ColumnsDialog> {
                 OutlinedButton(onPressed: _addStep, child: const Text('Добавить шаг')),
               ]),
             ],
+            const Divider(),
+            const Text('Наборы столбцов (пресеты):', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
+            const SizedBox(height: 6),
+            Row(children: [
+              Expanded(
+                child: TextField(
+                  controller: _presetNameController,
+                  decoration: const InputDecoration(labelText: 'Имя набора', hintText: 'Например: Баланс и SIM', isDense: true),
+                  onSubmitted: (_) => _savePreset(),
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton(onPressed: _savePreset, child: const Text('Сохранить набор')),
+            ]),
+            if (_presets.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Wrap(spacing: 6, runSpacing: 4, children: [
+                for (final entry in _presets.entries)
+                  InputChip(
+                    label: Text(entry.key, style: const TextStyle(fontSize: 11)),
+                    onPressed: () => setState(() {
+                      if (entry.value.isEmpty) {
+                        _all = true;
+                      } else {
+                        _all = false;
+                        _selected = List<String>.of(entry.value);
+                      }
+                    }),
+                    onDeleted: () => setState(() => _presets.remove(entry.key)),
+                  ),
+              ]),
+            ],
             const SizedBox(height: 8),
             const Text('Изменение применяется ко всем строкам, в том числе к старым запускам: '
                 'исходные результаты хранятся в базе.',
@@ -918,6 +1036,11 @@ class _ColumnsDialogState extends State<_ColumnsDialog> {
             final c = widget.controller;
             await c.updateSettings(c.settings.copyWith(
               excelColumns: _all ? const <String>[] : List<String>.of(_selected),
+              excelColumnTitles: Map<String, String>.from(_customTitles),
+              excelColumnPresets: {
+                for (final entry in _presets.entries)
+                  entry.key: List<String>.of(entry.value),
+              },
             ));
             await c.exportExcel();
             navigator.pop();

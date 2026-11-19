@@ -35,8 +35,14 @@ class ExcelExporter {
   static List<String> columns(List<String> selected, List<RunRow> rows) =>
       ExcelFields.resolve(selected, maxStep(rows));
 
-  /// Заголовок столбца.
-  static String header(String id, List<RunRow> rows) {
+  /// Заголовок столбца с учётом пользовательского названия [customTitles].
+  static String header(
+    String id,
+    List<RunRow> rows, {
+    Map<String, String> customTitles = const {},
+  }) {
+    final custom = customTitles[id]?.trim();
+    if (custom != null && custom.isNotEmpty) return custom;
     if (!ExcelFields.isStep(id)) return ExcelFields.title(id);
     final number = ExcelFields.stepNumber(id);
     final names = <String>{};
@@ -75,6 +81,7 @@ class ExcelExporter {
     required String path,
     required List<RunRow> rows,
     required List<String> selectedColumns,
+    Map<String, String> customTitles = const {},
   }) async {
     final excel = Excel.createExcel();
     excel.rename('Sheet1', sheetTitle);
@@ -82,7 +89,7 @@ class ExcelExporter {
 
     final ids = columns(selectedColumns, rows);
     sheet.appendRow(
-        ids.map<CellValue?>((id) => TextCellValue(header(id, rows))).toList());
+        ids.map<CellValue?>((id) => TextCellValue(header(id, rows, customTitles: customTitles))).toList());
     for (var c = 0; c < ids.length; c++) {
       sheet
           .cell(CellIndex.indexByColumnRow(columnIndex: c, rowIndex: 0))

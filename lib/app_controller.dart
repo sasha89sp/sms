@@ -1166,6 +1166,7 @@ class AppController extends ChangeNotifier {
       path: paths.excelFile,
       rows: rows,
       selectedColumns: settings.excelColumns,
+      customTitles: settings.excelColumnTitles,
     );
     lastExcelPath = path;
     excelMessage = path == paths.excelFile

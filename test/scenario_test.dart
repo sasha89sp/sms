@@ -191,6 +191,18 @@ void main() {
 
       final clamped = AppSettings.fromJson({'smsSoundVolume': 1.5});
       expect(clamped.smsSoundVolume, 1.0);
+
+      final withCols = defaults.copyWith(
+        excelColumns: const ['sim', 'balance_first', 'step:1'],
+        excelColumnTitles: const {'sim': 'Телефон', 'step:1': 'Баланс USSD'},
+        excelColumnPresets: const {
+          'Кратко': ['sim', 'balance_first'],
+        },
+      );
+      final restoredCols = AppSettings.fromJson(withCols.toJson());
+      expect(restoredCols.excelColumns, ['sim', 'balance_first', 'step:1']);
+      expect(restoredCols.excelColumnTitles['sim'], 'Телефон');
+      expect(restoredCols.excelColumnPresets['Кратко'], ['sim', 'balance_first']);
     });
   });
 }
