@@ -1,31 +1,30 @@
 version: 1
-app_version: "2.1.13+1"
+app_version: "2.1.15+1"
 updated_at: "2026-11-19"
 project: huawei_modem_manager
 status: ready_for_ci_verification
 summary: >
-  Устранены замечания flutter analyze в validate-main
-  (unnecessary_string_escapes в modem_service.dart, onReorderItem в scenario_page.dart,
-  initialValue в calls_page.dart). Версия обновлена до 2.1.13+1.
+  Улучшено сохранение и восстановление звукового COM-порта для звонков (audioPort):
+  выбранный порт сохраняется в settings.json, не сбрасывается при временном
+  отсутствии устройства в списке портов и автоматически подбирается при первом
+  подключении, если ранее не был задан. Версия обновлена до 2.1.15+1.
 completed_changes:
-  - "В lib/services/modem_service.dart убраны лишние экранирования кавычек в AT+CPBW."
-  - "В lib/screens/scenario_page.dart переведён ReorderableListView.builder на onReorderItem."
-  - "В lib/screens/calls_page.dart DropdownButtonFormField переведён на initialValue."
-  - "Синхронно обновлена версия до 2.1.13+1 в pubspec.yaml, lib/main.dart, lib/screens/home_shell.dart, lib/screens/settings_page.dart и HANDOFF.yaml."
+  - "В lib/screens/calls_page.dart сохранённый audioPort остаётся в выпадающем списке с пометкой, если порт временно не найден, а при выборе сразу записывается в настройки."
+  - "В lib/app_controller.dart добавлен автоподбор и сохранение звукового порта при первом подключении модема, если audioPort ещё не задан."
+  - "Синхронно обновлена версия до 2.1.15+1 в pubspec.yaml, lib/main.dart, lib/screens/home_shell.dart, lib/screens/settings_page.dart и HANDOFF.yaml."
 files_changed:
-  - lib/services/modem_service.dart
-  - lib/screens/scenario_page.dart
   - lib/screens/calls_page.dart
+  - lib/app_controller.dart
   - lib/screens/settings_page.dart
   - lib/screens/home_shell.dart
   - lib/main.dart
-  - analysis_options.yaml
+  - test/scenario_test.dart
   - pubspec.yaml
   - HANDOFF.yaml
 verification:
   static_manifest_and_code_audit: "passed (UTF-8 without BOM, spaces only, no conflict markers or basic lint issues)"
   flutter_analyze_and_test: "not run locally (Flutter SDK is unavailable in container); pending CI run on Windows runner"
 next_step: >
-  Распаковать huawei_modem_manager_v2.1.13.zip в корень локального репозитория,
+  Распаковать huawei_modem_manager_v2.1.15.zip в корень локального репозитория,
   выполнить git add / commit / push и проверить прохождение workflows
   main-validation.yml, pr-checks.yml и windows-build.yml в GitHub Actions.

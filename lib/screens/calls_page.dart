@@ -186,20 +186,37 @@ class _CallsPageState extends State<CallsPage> {
             style: TextStyle(color: _muted, fontSize: 11),
           ),
           const SizedBox(height: 10),
-          DropdownButtonFormField<String>(
-            key: ValueKey(candidates.any((port) => port.name == audioPort) ? audioPort : ''),
-            initialValue: candidates.any((port) => port.name == audioPort) ? audioPort : '',
-            decoration: const InputDecoration(labelText: 'Звуковой COM-порт модема', prefixIcon: Icon(Icons.graphic_eq)),
-            items: [
-              const DropdownMenuItem(value: '', child: Text('Не выбран (без звука)')),
-              ...candidates.map((port) => DropdownMenuItem(
-                    value: port.name,
-                    child: Text('${port.name} · ${port.friendlyName.isEmpty ? 'COM-порт' : port.friendlyName}',
-                        overflow: TextOverflow.ellipsis),
-                  )),
-            ],
-            onChanged: (value) => _perform(context, () => c.updateSettings(c.settings.copyWith(audioPort: value ?? ''))),
-          ),
+          Builder(builder: (context) {
+            final savedMissing = audioPort.isNotEmpty &&
+                !candidates.any((port) => port.name == audioPort);
+            return DropdownButtonFormField<String>(
+              key: ValueKey('audio_port_$audioPort'),
+              initialValue: audioPort,
+              decoration: const InputDecoration(
+                labelText: 'Звуковой COM-порт модема (запоминается)',
+                prefixIcon: Icon(Icons.graphic_eq),
+              ),
+              items: [
+                const DropdownMenuItem(value: '', child: Text('Не выбран (без звука)')),
+                if (savedMissing)
+                  DropdownMenuItem(
+                    value: audioPort,
+                    child: Text('$audioPort · сохранён (сейчас не найден)', overflow: TextOverflow.ellipsis),
+                  ),
+                ...candidates.map((port) => DropdownMenuItem(
+                      value: port.name,
+                      child: Text(
+                        '${port.name} · ${port.friendlyName.isEmpty ? 'COM-порт' : port.friendlyName}',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    )),
+              ],
+              onChanged: (value) => _perform(
+                context,
+                () => c.updateSettings(c.settings.copyWith(audioPort: value ?? '')),
+              ),
+            );
+          }),
           const SizedBox(height: 8),
           Wrap(spacing: 8, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
             FilterChip(

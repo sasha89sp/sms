@@ -98,7 +98,7 @@ class _HomeShellState extends State<HomeShell> {
                                   fontWeight: FontWeight.w800,
                                   letterSpacing: 1.2,
                                 )),
-                            Text('MODEM MANAGER · v2.1.13',
+                            Text('MODEM MANAGER · v2.1.15',
                                 style: TextStyle(
                                   color: Color(0xFF8EA0B8),
                                   fontSize: 9,
@@ -232,7 +232,7 @@ class _HomeShellState extends State<HomeShell> {
                 ),
                 const Padding(
                   padding: EdgeInsets.only(bottom: 15),
-                  child: Text('Версия 2.1.13',
+                  child: Text('Версия 2.1.15',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Color(0xFF667990), fontSize: 10)),
                 ),

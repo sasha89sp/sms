@@ -363,7 +363,24 @@ class AppController extends ChangeNotifier {
 
   bool get _hasSimInserted => modemInfo.simStatus != 'SIM не обнаружена';
 
+  Future<void> _maybeRememberAudioPort() async {
+    if (settings.audioPort.isNotEmpty) return;
+    final activePort = modem.connectedPort ?? '';
+    final candidates = availablePorts
+        .where((p) => p.name.isNotEmpty && p.name != activePort && p.name != settings.preferredPort)
+        .toList();
+    if (candidates.isEmpty) return;
+    final appInterface = candidates.firstWhere(
+      (p) => p.friendlyName.toLowerCase().contains('application interface') ||
+          p.friendlyName.toLowerCase().contains('app interface') ||
+          p.friendlyName.toLowerCase().contains('voice'),
+      orElse: () => candidates.first,
+    );
+    await updateSettings(settings.copyWith(audioPort: appInterface.name));
+  }
+
   Future<void> _afterConnect(ModemInfo info) async {
+    await _maybeRememberAudioPort();
     if (info.simStatus == 'SIM не обнаружена') {
       simId = '';
       simPhone = '';

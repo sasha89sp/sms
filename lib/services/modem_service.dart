@@ -608,7 +608,7 @@ class ModemService {
     final safeName = name.replaceAll('"', '').replaceAll('\r', ' ').replaceAll('\n', ' ');
     return _exclusive(() async {
       await _writeAndRead('AT+CPBS="SM"');
-      return _writeAndRead('AT+CPBW=\$index,"\$safeNumber",\$typeOfAddress,"\$safeName"',
+      return _writeAndRead('AT+CPBW=$index,"$safeNumber",$typeOfAddress,"$safeName"',
           timeout: const Duration(seconds: 10));
     });
   }

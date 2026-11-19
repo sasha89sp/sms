@@ -203,6 +203,10 @@ void main() {
       expect(restoredCols.excelColumns, ['sim', 'balance_first', 'step:1']);
       expect(restoredCols.excelColumnTitles['sim'], 'Телефон');
       expect(restoredCols.excelColumnPresets['Кратко'], ['sim', 'balance_first']);
+
+      final withAudio = defaults.copyWith(audioPort: 'COM21');
+      final restoredAudio = AppSettings.fromJson(withAudio.toJson());
+      expect(restoredAudio.audioPort, 'COM21');
     });
   });
 }
