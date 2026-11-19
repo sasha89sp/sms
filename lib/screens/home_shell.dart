@@ -72,14 +72,20 @@ class _HomeShellState extends State<HomeShell> {
                   padding: const EdgeInsets.symmetric(horizontal: 19),
                   child: Row(
                     children: [
-                      Container(
-                        width: 38,
-                        height: 38,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF246BCE),
-                          borderRadius: BorderRadius.circular(11),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(11),
+                        child: Image.asset(
+                          'assets/app_icon.ico',
+                          width: 38,
+                          height: 38,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            width: 38,
+                            height: 38,
+                            color: const Color(0xFF246BCE),
+                            child: const Icon(Icons.router_rounded, color: Colors.white),
+                          ),
                         ),
-                        child: const Icon(Icons.router_rounded, color: Colors.white),
                       ),
                       const SizedBox(width: 11),
                       const Expanded(
@@ -226,7 +232,7 @@ class _HomeShellState extends State<HomeShell> {
                 ),
                 const Padding(
                   padding: EdgeInsets.only(bottom: 15),
-                  child: Text('Версия 2.1.1',
+                  child: Text('Версия 2.1.5',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Color(0xFF667990), fontSize: 10)),
                 ),

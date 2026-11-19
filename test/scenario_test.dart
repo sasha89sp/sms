@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:huawei_modem_manager/models/app_settings.dart';
 import 'package:huawei_modem_manager/models/excel_fields.dart';
 import 'package:huawei_modem_manager/models/scenario.dart';
 import 'package:huawei_modem_manager/services/excel_exporter.dart';
@@ -176,6 +177,20 @@ void main() {
       expect(back.waitSms, isTrue);
       expect(back.smsTimeout, 90);
       expect(back.smsSender, 'MTS');
+    });
+
+    test('AppSettings preserves SMS notification sound and volume', () {
+      const defaults = AppSettings();
+      expect(defaults.smsSoundEnabled, isTrue);
+      expect(defaults.smsSoundVolume, closeTo(0.7, 0.001));
+
+      final updated = defaults.copyWith(smsSoundEnabled: false, smsSoundVolume: 0.35);
+      final restored = AppSettings.fromJson(updated.toJson());
+      expect(restored.smsSoundEnabled, isFalse);
+      expect(restored.smsSoundVolume, closeTo(0.35, 0.001));
+
+      final clamped = AppSettings.fromJson({'smsSoundVolume': 1.5});
+      expect(clamped.smsSoundVolume, 1.0);
     });
   });
 }

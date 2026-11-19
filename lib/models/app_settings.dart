@@ -22,6 +22,8 @@ class AppSettings {
     this.smsAutoReceive = true,
     this.smsPollSeconds = 15,
     this.deleteSmsFromModem = false,
+    this.smsSoundEnabled = true,
+    this.smsSoundVolume = 0.7,
     this.audioPort = '',
     this.closeToTray = true,
   });
@@ -57,6 +59,8 @@ class AppSettings {
   final bool smsAutoReceive;
   final int smsPollSeconds;
   final bool deleteSmsFromModem;
+  final bool smsSoundEnabled;
+  final double smsSoundVolume;
 
   /// COM-порт, по которому модем передаёт голос (PCM).
   final String audioPort;
@@ -84,6 +88,8 @@ class AppSettings {
     bool? smsAutoReceive,
     int? smsPollSeconds,
     bool? deleteSmsFromModem,
+    bool? smsSoundEnabled,
+    double? smsSoundVolume,
     String? audioPort,
     bool? closeToTray,
   }) {
@@ -109,6 +115,8 @@ class AppSettings {
       smsAutoReceive: smsAutoReceive ?? this.smsAutoReceive,
       smsPollSeconds: smsPollSeconds ?? this.smsPollSeconds,
       deleteSmsFromModem: deleteSmsFromModem ?? this.deleteSmsFromModem,
+      smsSoundEnabled: smsSoundEnabled ?? this.smsSoundEnabled,
+      smsSoundVolume: smsSoundVolume ?? this.smsSoundVolume,
       audioPort: audioPort ?? this.audioPort,
       closeToTray: closeToTray ?? this.closeToTray,
     );
@@ -135,6 +143,8 @@ class AppSettings {
         'smsAutoReceive': smsAutoReceive,
         'smsPollSeconds': smsPollSeconds,
         'deleteSmsFromModem': deleteSmsFromModem,
+        'smsSoundEnabled': smsSoundEnabled,
+        'smsSoundVolume': smsSoundVolume,
         'audioPort': audioPort,
         'closeToTray': closeToTray,
       };
@@ -166,6 +176,8 @@ class AppSettings {
         smsAutoReceive: json['smsAutoReceive'] as bool? ?? true,
         smsPollSeconds: (json['smsPollSeconds'] as num?)?.toInt() ?? 15,
         deleteSmsFromModem: json['deleteSmsFromModem'] as bool? ?? false,
+        smsSoundEnabled: json['smsSoundEnabled'] as bool? ?? true,
+        smsSoundVolume: ((json['smsSoundVolume'] as num?)?.toDouble() ?? 0.7).clamp(0.0, 1.0),
         audioPort: json['audioPort'] as String? ?? '',
         closeToTray: json['closeToTray'] as bool? ?? true,
       );

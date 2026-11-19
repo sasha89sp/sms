@@ -823,7 +823,9 @@ class AppController extends ChangeNotifier {
       }
 
       isRunning = false;
-      currentStep = success ? 'Сценарий завершён успешно' : 'Сценарий завершён с ошибками';
+            currentStep = success
+          ? 'Сценарий завершён успешно · ${_formatDateTime(finishedAt)}'
+          : 'Сценарий завершён с ошибками';
       _log(
         success ? 'SUCCESS' : 'WARN',
         'Сценарий «${scenario.name}» завершён',
@@ -1337,7 +1339,10 @@ class AppController extends ChangeNotifier {
         await modem.deleteSmsFromModem(saved);
       }
       _lastSmsSync = DateTime.now();
-      if (added > 0) _log('SUCCESS', 'Получено новых SMS: $added');
+      if (added > 0) {
+        _log('SUCCESS', 'Получено новых SMS: $added');
+        playSmsNotification(volume: settings.smsSoundVolume);
+      }
       await reloadSms();
       return added;
     } catch (error) {
@@ -1348,6 +1353,18 @@ class AppController extends ChangeNotifier {
     } finally {
       isSyncingSms = false;
       notifyListeners();
+    }
+  }
+
+  void playSmsNotification({double? volume}) {
+    if (!Platform.isWindows) return;
+    if (volume == null && !settings.smsSoundEnabled) return;
+    final vol = (volume ?? settings.smsSoundVolume).clamp(0.0, 1.0);
+    if (vol <= 0.001) return;
+    try {
+      playSmsNotificationSound(volume: vol);
+    } catch (_) {
+      // звук уведомления не должен прерывать работу приложения
     }
   }
 
@@ -1378,6 +1395,30 @@ class AppController extends ChangeNotifier {
 
   Future<void> markAllSmsRead() async {
     await database.markAllSmsRead();
+    await reloadSms();
+  }
+
+  Future<void> trashSmsBatch(List<int> ids) async {
+    if (ids.isEmpty) return;
+    await database.trashSmsBatch(ids);
+    await reloadSms();
+  }
+
+  Future<void> restoreSmsBatch(List<int> ids) async {
+    if (ids.isEmpty) return;
+    await database.restoreSmsBatch(ids);
+    await reloadSms();
+  }
+
+  Future<void> purgeSmsBatch(List<int> ids) async {
+    if (ids.isEmpty) return;
+    await database.deleteSmsForeverBatch(ids);
+    await reloadSms();
+  }
+
+  Future<void> markSmsReadBatch(List<int> ids) async {
+    if (ids.isEmpty) return;
+    await database.markSmsReadBatch(ids);
     await reloadSms();
   }
 

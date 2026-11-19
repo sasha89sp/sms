@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tray_manager/tray_manager.dart';
@@ -10,6 +12,9 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     await windowManager.ensureInitialized();
+    if (Platform.isWindows) {
+      await windowManager.setIcon('assets/app_icon.ico');
+    }
     // Закрытие окна перехватывается: окно сворачивается в трей.
     await windowManager.setPreventClose(true);
   } catch (_) {
@@ -52,6 +57,11 @@ class _HuaweiModemManagerAppState extends State<HuaweiModemManagerApp>
   }
 
   Future<void> _showWindow() async {
+    if (Platform.isWindows) {
+      try {
+        await windowManager.setIcon('assets/app_icon.ico');
+      } catch (_) {}
+    }
     await windowManager.show();
     await windowManager.focus();
   }

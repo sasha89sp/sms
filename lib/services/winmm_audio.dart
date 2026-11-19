@@ -1,4 +1,6 @@
 import 'dart:ffi';
+import 'dart:io';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
@@ -286,5 +288,78 @@ class WaveInRecorder {
     final format = _format;
     if (format != null) calloc.free(format);
     _format = null;
+  }
+}
+
+/// Воспроизводит короткую мелодию уведомления (PCM 8 кГц / 16 бит / моно)
+/// с заданной громкостью [volume] в диапазоне от 0.0 до 1.0.
+void playSmsNotificationSound({required double volume}) {
+  final clamped = volume.clamp(0.0, 1.0);
+  if (clamped <= 0.001) return;
+
+  const sampleRate = 8000;
+  // Короткая трёхнотная мелодия (C5 -> E5 -> G5), ~0.42 с.
+  const notes = <(double, double, double)>[
+    (523.25, 0.11, 0.45),
+    (659.25, 0.11, 0.45),
+    (783.99, 0.20, 0.40),
+  ];
+
+  final samples = <int>[];
+  for (final note in notes) {
+    final freq = note.$1;
+    final dur = note.$2;
+    final baseAmp = note.$3 * clamped;
+    final total = (sampleRate * dur).round();
+    for (var i = 0; i < total; i++) {
+      final t = i / sampleRate;
+      final attack = (i / (sampleRate * 0.012)).clamp(0.0, 1.0);
+      final decay = (1.0 - (i / total) * 0.65).clamp(0.0, 1.0);
+      final val = baseAmp * attack * decay * math.sin(2.0 * math.pi * freq * t);
+      final pcm = (val * 32767).round().clamp(-32767, 32767);
+      samples.add(pcm);
+    }
+  }
+
+  final bytes = Uint8List(samples.length * 2);
+  final view = ByteData.sublistView(bytes);
+  for (var i = 0; i < samples.length; i++) {
+    view.setInt16(i * 2, samples[i], Endian.little);
+  }
+
+  final winmm = _Winmm.instance;
+  final handlePtr = calloc<IntPtr>();
+  final format = _allocFormat();
+  final openRes = winmm.waveOutOpen(handlePtr, _waveMapper, format, 0, 0, 0);
+  if (openRes != 0) {
+    calloc.free(handlePtr);
+    calloc.free(format);
+    return;
+  }
+  final handle = handlePtr.value;
+  calloc.free(handlePtr);
+
+  final slot = _Slot(bytes.length);
+  try {
+    slot.buffer.asTypedList(bytes.length).setAll(0, bytes);
+    slot.reset(bytes.length);
+    winmm.waveOutPrepare(handle, slot.header, _Slot.headerSize);
+    slot.prepared = true;
+    winmm.waveOutWrite(handle, slot.header, _Slot.headerSize);
+    slot.queued = true;
+
+    final waitMs = ((samples.length / sampleRate) * 1000).ceil() + 120;
+    final deadline = DateTime.now().add(Duration(milliseconds: waitMs));
+    while (!slot.done && DateTime.now().isBefore(deadline)) {
+      sleep(const Duration(milliseconds: 20));
+    }
+  } finally {
+    winmm.waveOutReset(handle);
+    if (slot.prepared) {
+      winmm.waveOutUnprepare(handle, slot.header, _Slot.headerSize);
+    }
+    slot.free();
+    winmm.waveOutClose(handle);
+    calloc.free(format);
   }
 }

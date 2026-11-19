@@ -20,6 +20,8 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _statusReport = false;
   bool _smsAuto = true;
   bool _deleteFromModem = false;
+  bool _smsSoundEnabled = true;
+  double _smsSoundVolume = 0.7;
   bool _closeToTray = true;
 
   @override
@@ -38,6 +40,8 @@ class _SettingsPageState extends State<SettingsPage> {
     _statusReport = s.smsRequireNetworkAck;
     _smsAuto = s.smsAutoReceive;
     _deleteFromModem = s.deleteSmsFromModem;
+    _smsSoundEnabled = s.smsSoundEnabled;
+    _smsSoundVolume = s.smsSoundVolume.clamp(0.0, 1.0);
     _closeToTray = s.closeToTray;
   }
 
@@ -139,6 +143,44 @@ class _SettingsPageState extends State<SettingsPage> {
             onChanged: (value) => setState(() => _statusReport = value),
             title: const Text('Запрашивать сетевой отчёт о доставке', style: TextStyle(fontSize: 12)),
           ),
+          SwitchListTile.adaptive(
+            contentPadding: EdgeInsets.zero,
+            value: _smsSoundEnabled,
+            onChanged: (value) => setState(() => _smsSoundEnabled = value),
+            title: const Text('Звуковое оповещение при получении SMS', style: TextStyle(fontSize: 12)),
+            subtitle: const Text('Проигрывает короткую мелодию на динамиках ПК.', style: TextStyle(fontSize: 10)),
+          ),
+          Row(children: [
+            const Text('Громкость:', style: TextStyle(fontSize: 12)),
+            Expanded(
+              child: Slider(
+                value: _smsSoundVolume,
+                min: 0.0,
+                max: 1.0,
+                divisions: 20,
+                label: '${(_smsSoundVolume * 100).round()}%',
+                onChanged: _smsSoundEnabled
+                    ? (value) => setState(() => _smsSoundVolume = value)
+                    : null,
+              ),
+            ),
+            SizedBox(
+              width: 44,
+              child: Text(
+                '${(_smsSoundVolume * 100).round()}%',
+                textAlign: TextAlign.right,
+                style: const TextStyle(fontSize: 11),
+              ),
+            ),
+            const SizedBox(width: 6),
+            IconButton(
+              tooltip: 'Проверить мелодию',
+              onPressed: _smsSoundEnabled
+                  ? () => context.read<AppController>().playSmsNotification(volume: _smsSoundVolume)
+                  : null,
+              icon: const Icon(Icons.volume_up, size: 18),
+            ),
+          ]),
           const SizedBox(height: 6),
           TextField(
             controller: _smsMin,
@@ -203,6 +245,8 @@ class _SettingsPageState extends State<SettingsPage> {
       smsAutoReceive: _smsAuto,
       smsPollSeconds: poll,
       deleteSmsFromModem: _deleteFromModem,
+      smsSoundEnabled: _smsSoundEnabled,
+      smsSoundVolume: _smsSoundVolume,
       smsMinBalance: minBalance,
       closeToTray: _closeToTray,
     );

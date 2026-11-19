@@ -27,6 +27,11 @@ try {
   }
 
   Copy-Item -Path $generatedWindows -Destination (Join-Path $projectRoot 'windows') -Recurse -Force
+  $appIconSrc = Join-Path $projectRoot 'assets\app_icon.ico'
+  $appIconDst = Join-Path $projectRoot 'windows\runner\resources\app_icon.ico'
+  if ((Test-Path $appIconSrc) -and (Test-Path (Split-Path $appIconDst))) {
+    Copy-Item -Path $appIconSrc -Destination $appIconDst -Force
+  }
   Write-Host 'Windows runner scaffold created.'
 }
 finally {

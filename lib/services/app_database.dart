@@ -268,5 +268,41 @@ class AppDatabase {
       'sms_store', {'folder': 'purged', 'body': '', 'sender': ''},
       where: "folder = 'trash'");
 
+  Future<void> trashSmsBatch(List<int> ids) async {
+    if (ids.isEmpty) return;
+    final placeholders = List.filled(ids.length, '?').join(',');
+    await _database.rawUpdate(
+      "UPDATE sms_store SET prev_folder = folder, folder = 'trash' WHERE id IN ($placeholders)",
+      ids,
+    );
+  }
+
+  Future<void> restoreSmsBatch(List<int> ids) async {
+    if (ids.isEmpty) return;
+    final placeholders = List.filled(ids.length, '?').join(',');
+    await _database.rawUpdate(
+      "UPDATE sms_store SET folder = CASE WHEN prev_folder = '' THEN 'inbox' ELSE prev_folder END, prev_folder = '' WHERE id IN ($placeholders)",
+      ids,
+    );
+  }
+
+  Future<void> markSmsReadBatch(List<int> ids) async {
+    if (ids.isEmpty) return;
+    final placeholders = List.filled(ids.length, '?').join(',');
+    await _database.rawUpdate(
+      "UPDATE sms_store SET is_new = 0 WHERE id IN ($placeholders)",
+      ids,
+    );
+  }
+
+  Future<void> deleteSmsForeverBatch(List<int> ids) async {
+    if (ids.isEmpty) return;
+    final placeholders = List.filled(ids.length, '?').join(',');
+    await _database.rawUpdate(
+      "UPDATE sms_store SET folder = 'purged', body = '', sender = '' WHERE id IN ($placeholders)",
+      ids,
+    );
+  }
+
   Future<void> close() => _database.close();
 }
