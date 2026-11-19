@@ -14,7 +14,7 @@ Future<void> main() async {
     await windowManager.ensureInitialized();
     if (Platform.isWindows) {
       await windowManager.setIcon('assets/app_icon.ico');
-      await windowManager.setTitle('Huawei Modem Manager · v2.1.8');
+      await windowManager.setTitle('Huawei Modem Manager · v2.1.9');
     }
     // Закрытие окна перехватывается: окно сворачивается в трей.
     await windowManager.setPreventClose(true);
@@ -61,7 +61,7 @@ class _HuaweiModemManagerAppState extends State<HuaweiModemManagerApp>
     if (Platform.isWindows) {
       try {
         await windowManager.setIcon('assets/app_icon.ico');
-        await windowManager.setTitle('Huawei Modem Manager · v2.1.8');
+        await windowManager.setTitle('Huawei Modem Manager · v2.1.9');
       } catch (_) {}
     }
     await windowManager.show();
@@ -145,7 +145,7 @@ class _HuaweiModemManagerAppState extends State<HuaweiModemManagerApp>
         return ChangeNotifierProvider.value(
           value: snapshot.data!,
           child: MaterialApp(
-            title: 'Huawei Modem Manager · v2.1.8',
+            title: 'Huawei Modem Manager · v2.1.9',
             debugShowCheckedModeBanner: false,
             theme: ThemeData(
               useMaterial3: true,

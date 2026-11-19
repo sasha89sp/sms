@@ -1,33 +1,26 @@
 version: 1
-app_version: "2.1.8+1"
+app_version: "2.1.9+1"
 updated_at: "2026-11-19"
 project: huawei_modem_manager
 status: ready_for_ci_verification
 summary: >
-  Добавлены настройка пользовательских заголовков столбцов Excel и сохранение
-  именованных наборов (пресетов) столбцов в дополнение к свободному выбору и
-  порядку колонок. Версия обновлена до 2.1.8+1.
+  Исправлена ошибка компиляции Windows Release Build: в AppController добавлен
+  метод _formatDateTime для форматирования даты и времени завершения сценария.
+  Версия синхронно обновлена до 2.1.9+1.
 completed_changes:
-  - "В AppSettings добавлены поля excelColumnTitles и excelColumnPresets с обратной совместимостью JSON."
-  - "В ExcelExporter и AppController._writeExcel добавлена поддержка пользовательских названий столбцов."
-  - "В _ColumnsDialog (lib/screens/scenario_page.dart) добавлены редактирование заголовков столбцов и сохранение/применение/удаление наборов столбцов."
-  - "Синхронно обновлена версия до 2.1.8+1 в pubspec.yaml, lib/main.dart, lib/screens/home_shell.dart, lib/screens/settings_page.dart и HANDOFF.yaml."
+  - "В AppController (lib/app_controller.dart) добавлен метод _formatDateTime(DateTime dt), устраняющий ошибку 'The method _formatDateTime isn\'t defined for the type AppController'."
+  - "Синхронно обновлена версия до 2.1.9+1 в pubspec.yaml, lib/main.dart, lib/screens/home_shell.dart, lib/screens/settings_page.dart и HANDOFF.yaml."
 files_changed:
-  - lib/models/app_settings.dart
-  - lib/services/excel_exporter.dart
   - lib/app_controller.dart
-  - lib/screens/scenario_page.dart
   - lib/screens/settings_page.dart
   - lib/screens/home_shell.dart
   - lib/main.dart
-  - test/scenario_test.dart
   - pubspec.yaml
-  - MAP.md
   - HANDOFF.yaml
 verification:
   static_manifest_and_code_audit: "passed (UTF-8 without BOM, spaces only, no conflict markers or basic lint issues)"
   flutter_analyze_and_test: "not run locally (Flutter SDK is unavailable in container); pending CI run on Windows runner"
 next_step: >
-  Распаковать huawei_modem_manager_v2.1.8.zip в корень локального репозитория,
+  Распаковать huawei_modem_manager_v2.1.9.zip в корень локального репозитория,
   выполнить git add / commit / push и проверить прохождение workflows
   pr-checks.yml, main-validation.yml и windows-build.yml в GitHub Actions.

@@ -1097,6 +1097,11 @@ class AppController extends ChangeNotifier {
     );
   }
 
+  String _formatDateTime(DateTime dt) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${two(dt.day)}.${two(dt.month)}.${dt.year} ${two(dt.hour)}:${two(dt.minute)}:${two(dt.second)}';
+  }
+
   String _oneLine(String text) =>
       text.replaceAll(RegExp(r'\s+'), ' ').trim();
 
