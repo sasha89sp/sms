@@ -285,6 +285,7 @@ class Scenario {
     return steps.map<String?>((step) {
       switch (step.type) {
         case StepType.ownNumber:
+          return unique('Номер SIM');
         case StepType.pause:
           return null;
         case StepType.ussd:

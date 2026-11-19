@@ -1,24 +1,31 @@
 version: 1
-app_version: "2.1.0+1"
+app_version: "2.1.1+1"
 updated_at: "2026-11-19"
 project: huawei_modem_manager
 status: ready_for_ci_verification
 summary: >
-  Обновлён файл AGENTS.md согласно актуальному регламенту разработки
-  и перепроверена целостность репозитория (pubspec.yaml, YAML-конфиги,
-  отсутствие BOM, табуляций и конфликтов слияния). Код приложения не изменялся,
-  версия сохранена: 2.1.0+1.
+  Реализовано раздельное извлечение баланса и номера SIM из одного USSD-ответа
+  (например *100#) с кэшированием ответа в рамках одного прогона сценария и
+  выводом столбца «Номер SIM» в отчёт Excel. Версия обновлена до 2.1.1+1.
 completed_changes:
-  - "Обновлён AGENTS.md с правилами архитектуры, анализа, UI и версионирования."
-  - "Проведена статическая проверка манифестов, YAML-пайплайнов и исходного кода Dart."
-  - "Собран чистый архив исходников huawei_modem_manager_v2.1.0.zip без временных каталогов."
+  - "В UssdCodec.extractBalance добавлено исключение телефонных номеров (+7/7/8) перед поиском суммы."
+  - "В AppController (_RunContext / _ussdInRun) добавлено кэширование ответов USSD по коду в рамках одного прогона сценария, чтобы шаги balance и ownNumber с одной командой (*100#) не дублировали сетевой запрос."
+  - "В Scenario.columnHeaders для шага StepType.ownNumber добавлен отдельный столбец «Номер SIM» для таблицы результатов и Excel."
+  - "Добавлены модульные тесты в test/scenario_test.dart на разбор комбинированного ответа USSD и обновлённый заголовок столбца."
+  - "Синхронно обновлена версия до 2.1.1+1 в pubspec.yaml, lib/screens/home_shell.dart и HANDOFF.yaml."
 files_changed:
-  - AGENTS.md
+  - lib/services/ussd_codec.dart
+  - lib/models/scenario.dart
+  - lib/app_controller.dart
+  - lib/screens/home_shell.dart
+  - test/scenario_test.dart
+  - pubspec.yaml
+  - MAP.md
   - HANDOFF.yaml
 verification:
   static_manifest_and_code_audit: "passed (UTF-8 without BOM, spaces only, no conflict markers or basic lint issues)"
   flutter_analyze_and_test: "not run locally (Flutter SDK is unavailable in container); pending CI run on Windows runner"
 next_step: >
-  Распаковать huawei_modem_manager_v2.1.0.zip в корень локального репозитория,
+  Распаковать huawei_modem_manager_v2.1.1.zip в корень локального репозитория,
   выполнить git add / commit / push и проверить прохождение workflows
   pr-checks.yml, main-validation.yml и windows-build.yml в GitHub Actions.

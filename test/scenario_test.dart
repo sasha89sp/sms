@@ -58,12 +58,22 @@ void main() {
     });
   });
 
-  group('Balance extraction', () {
+  group('Balance and phone extraction from combined USSD', () {
     test('finds balance next to a label or currency', () {
       expect(UssdCodec.extractBalance('Баланс:2663,62р'), '2663.62');
       expect(UssdCodec.extractBalance('Ваш баланс 50.5 руб.'), '50.5');
       expect(UssdCodec.extractBalance('12,00 р.'), '12.00');
       expect(UssdCodec.extractBalance('Остаток: -3.4р'), '-3.4');
+    });
+
+    test('separates balance and phone number from a single combined response', () {
+      const combined = 'Ваш номер +79991234567. Баланс: 150,50 руб.';
+      expect(UssdCodec.extractBalance(combined), '150.50');
+      expect(UssdCodec.extractPhoneNumber(combined), '+79991234567');
+
+      const phoneOnly = 'Номер: 8 (916) 555-44-33';
+      expect(UssdCodec.extractBalance(phoneOnly), '');
+      expect(UssdCodec.extractPhoneNumber(phoneOnly), '+79165554433');
     });
   });
 
@@ -83,7 +93,7 @@ void main() {
         ],
       );
       expect(scenario.columnHeaders(), [
-        null,
+        'Номер SIM',
         'USSD *100#',
         'Баланс 1 (*100#)',
         'SMS → +7900',

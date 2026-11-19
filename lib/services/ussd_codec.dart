@@ -169,7 +169,13 @@ class UssdCodec {
   }
 
   static String extractBalance(String text) {
-    final normalized = text.replaceAll(',', '.');
+    // Убираем номера телефонов (+7/7/8 + 10 цифр), чтобы цифры номера не мешали
+    // поиску суммы, когда USSD возвращает и номер, и баланс в одном ответе.
+    final withoutPhones = text.replaceAll(
+      RegExp(r'(?<!\d)(?:\+7|7|8)\D*\d{3}\D*\d{3}\D*\d{2}\D*\d{2}(?!\d)'),
+      ' ',
+    );
+    final normalized = withoutPhones.replaceAll(',', '.');
     final lower = normalized.toLowerCase();
 
     // 1) число рядом со словом «баланс / остаток».

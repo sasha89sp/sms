@@ -40,6 +40,7 @@ class BatchItem {
 class _RunContext {
   double? lastBalance;
   String ownNumber = '';
+  final Map<String, String> ussdResponses = {};
 }
 
 class AppController extends ChangeNotifier {
@@ -837,7 +838,7 @@ class AppController extends ChangeNotifier {
     switch (step.type) {
       case StepType.ownNumber:
         {
-        final response = await _ussdWithRetry(step.code);
+        final response = await _ussdInRun(step.code, context);
         final extracted = UssdCodec.extractPhoneNumber(response);
         if (extracted.isEmpty) {
           return StepOutcome('Номер не распознан: ${_oneLine(response)}', ok: false);
@@ -848,7 +849,7 @@ class AppController extends ChangeNotifier {
 
       case StepType.ussd:
         {
-        final response = await _ussdWithRetry(step.code);
+        final response = await _ussdInRun(step.code, context);
         return StepOutcome(_oneLine(response));
         }
 
@@ -913,7 +914,7 @@ class AppController extends ChangeNotifier {
     String response = '';
     String ussdError = '';
     try {
-      response = await _ussdWithRetry(step.code);
+      response = await _ussdInRun(step.code, context);
     } catch (error) {
       ussdError = '$error'.replaceFirst('Bad state: ', '');
     }
@@ -1096,6 +1097,22 @@ class AppController extends ChangeNotifier {
 
   String _oneLine(String text) =>
       text.replaceAll(RegExp(r'\s+'), ' ').trim();
+
+  /// Выполняет USSD-команду с кэшированием ответа в рамках одного прогона
+  /// сценария, чтобы одинаковый запрос (например *100#) не дублировался в сеть,
+  /// если из него поочерёдно извлекаются баланс и номер.
+  Future<String> _ussdInRun(String code, _RunContext context) async {
+    final key = code.trim();
+    final cached = context.ussdResponses[key];
+    if (cached != null && cached.isNotEmpty) {
+      return cached;
+    }
+    final response = await _ussdWithRetry(code);
+    if (response.isNotEmpty) {
+      context.ussdResponses[key] = response;
+    }
+    return response;
+  }
 
   Future<String> _ussdWithRetry(String code) async {
     Object? lastError;

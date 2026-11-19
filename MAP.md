@@ -2,7 +2,7 @@
 
 ## Точка входа и управление состоянием
 - `lib/main.dart` — инициализация `window_manager`, системного трея (`tray_manager`), загрузка `AppController` и запуск `HuaweiModemManagerApp`.
-- `lib/app_controller.dart` — центральный `ChangeNotifier`-контроллер: автопоиск и переподключение USB-модема, таймеры опроса (`_fastTick` 1 с, `_slowTick` 3 с), выполнение сценариев, серия USSD, синхронизация SMS, управление голосовыми вызовами и записью фраз, экспорт в Excel и CSV.
+- `lib/app_controller.dart` — центральный `ChangeNotifier`-контроллер: автопоиск и переподключение USB-модема, таймеры опроса (`_fastTick` 1 с, `_slowTick` 3 с), выполнение сценариев (включая кэширование USSD-ответов в рамках прогона), серия USSD, синхронизация SMS, управление голосовыми вызовами и записью фраз, экспорт в Excel и CSV.
 
 ## Модели данных (`lib/models/`)
 - `lib/models/app_settings.dart` — настройки приложения (`AppSettings`), сериализация в JSON.
