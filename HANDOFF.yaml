@@ -1,30 +1,24 @@
 version: 1
-updated_at: "2026-11-18"
+app_version: "2.1.0+1"
+updated_at: "2026-11-19"
 project: huawei_modem_manager
 status: ready_for_ci_verification
 summary: >
-  Проект приведён к стандарту AGENTS.md: добавлены AGENTS.md, ROOT_MAP.md,
-  MAP.md, HANDOFF.yaml и унифицированные пайплайны GitHub Actions
-  (pr-checks.yml, windows-build.yml, main-validation.yml). Устранена причина
-  ошибки YAML-парсера FlutterManifest на этапе Enable Windows desktop.
+  Обновлён файл AGENTS.md согласно актуальному регламенту разработки
+  и перепроверена целостность репозитория (pubspec.yaml, YAML-конфиги,
+  отсутствие BOM, табуляций и конфликтов слияния). Код приложения не изменялся,
+  версия сохранена: 2.1.0+1.
 completed_changes:
-  - "Добавлены файлы проектной документации и навигации: AGENTS.md, ROOT_MAP.md, MAP.md, HANDOFF.yaml."
-  - "Перепроверен и нормализован pubspec.yaml (строгие пробельные отступы UTF-8 без BOM, без табуляции)."
-  - "Настроены GitHub Actions workflows согласно AGENTS.md: pr-checks.yml, windows-build.yml, main-validation.yml (удалён устаревший windows.yml)."
-  - "В workflows добавлена автоматическая проверка валидности YAML и определение корня Flutter-проекта перед запуском flutter config / flutter build."
+  - "Обновлён AGENTS.md с правилами архитектуры, анализа, UI и версионирования."
+  - "Проведена статическая проверка манифестов, YAML-пайплайнов и исходного кода Dart."
+  - "Собран чистый архив исходников huawei_modem_manager_v2.1.0.zip без временных каталогов."
 files_changed:
   - AGENTS.md
-  - ROOT_MAP.md
-  - MAP.md
   - HANDOFF.yaml
-  - pubspec.yaml
-  - .github/workflows/pr-checks.yml
-  - .github/workflows/windows-build.yml
-  - .github/workflows/main-validation.yml
 verification:
-  yaml_syntax_check: "passed (UTF-8 without BOM, spaces only, valid structure)"
-  flutter_analyze_and_test: "pending local/CI run on Windows runner"
+  static_manifest_and_code_audit: "passed (UTF-8 without BOM, spaces only, no conflict markers or basic lint issues)"
+  flutter_analyze_and_test: "not run locally (Flutter SDK is unavailable in container); pending CI run on Windows runner"
 next_step: >
-  Распаковать содержимое папки huawei_modem_manager в корень Git-репозитория,
+  Распаковать huawei_modem_manager_v2.1.0.zip в корень локального репозитория,
   выполнить git add / commit / push и проверить прохождение workflows
   pr-checks.yml, main-validation.yml и windows-build.yml в GitHub Actions.
