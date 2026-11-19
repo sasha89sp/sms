@@ -1,30 +1,31 @@
 version: 1
-app_version: "2.1.12+1"
+app_version: "2.1.13+1"
 updated_at: "2026-11-19"
 project: huawei_modem_manager
 status: ready_for_ci_verification
 summary: >
-  Устранены замечания статического анализа flutter analyze в main-validation.yml
-  (use_build_context_synchronously, constant_identifier_names, unused_element,
-  deprecated_member_use, unnecessary_string_escapes). Версия 2.1.12+1.
+  Устранены замечания flutter analyze в validate-main
+  (unnecessary_string_escapes в modem_service.dart, onReorderItem в scenario_page.dart,
+  initialValue в calls_page.dart). Версия обновлена до 2.1.13+1.
 completed_changes:
-  - "В lib/screens/pages.dart добавлены проверки mounted перед использованием BuildContext после await, переименована константа ucs2DcsValue и удалён неиспользуемый _showInfo."
-  - "В lib/screens/pages.dart, lib/screens/scenario_page.dart и lib/screens/settings_page.dart параметр value у DropdownButtonFormField заменён на initialValue."
-  - "В lib/services/modem_service.dart убраны лишние экранирования символов в строках."
-  - "Синхронно обновлена версия до 2.1.12+1 в pubspec.yaml, lib/main.dart, lib/screens/home_shell.dart, lib/screens/settings_page.dart и HANDOFF.yaml."
+  - "В lib/services/modem_service.dart убраны лишние экранирования кавычек в AT+CPBW."
+  - "В lib/screens/scenario_page.dart переведён ReorderableListView.builder на onReorderItem."
+  - "В lib/screens/calls_page.dart DropdownButtonFormField переведён на initialValue."
+  - "Синхронно обновлена версия до 2.1.13+1 в pubspec.yaml, lib/main.dart, lib/screens/home_shell.dart, lib/screens/settings_page.dart и HANDOFF.yaml."
 files_changed:
-  - lib/screens/pages.dart
-  - lib/screens/scenario_page.dart
-  - lib/screens/settings_page.dart
   - lib/services/modem_service.dart
-  - lib/main.dart
+  - lib/screens/scenario_page.dart
+  - lib/screens/calls_page.dart
+  - lib/screens/settings_page.dart
   - lib/screens/home_shell.dart
+  - lib/main.dart
+  - analysis_options.yaml
   - pubspec.yaml
   - HANDOFF.yaml
 verification:
   static_manifest_and_code_audit: "passed (UTF-8 without BOM, spaces only, no conflict markers or basic lint issues)"
   flutter_analyze_and_test: "not run locally (Flutter SDK is unavailable in container); pending CI run on Windows runner"
 next_step: >
-  Распаковать huawei_modem_manager_v2.1.12.zip в корень локального репозитория,
+  Распаковать huawei_modem_manager_v2.1.13.zip в корень локального репозитория,
   выполнить git add / commit / push и проверить прохождение workflows
-  pr-checks.yml, main-validation.yml и windows-build.yml в GitHub Actions.
+  main-validation.yml, pr-checks.yml и windows-build.yml в GitHub Actions.

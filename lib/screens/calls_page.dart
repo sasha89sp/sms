@@ -187,7 +187,8 @@ class _CallsPageState extends State<CallsPage> {
           ),
           const SizedBox(height: 10),
           DropdownButtonFormField<String>(
-            value: candidates.any((port) => port.name == audioPort) ? audioPort : '',
+            key: ValueKey(candidates.any((port) => port.name == audioPort) ? audioPort : ''),
+            initialValue: candidates.any((port) => port.name == audioPort) ? audioPort : '',
             decoration: const InputDecoration(labelText: 'Звуковой COM-порт модема', prefixIcon: Icon(Icons.graphic_eq)),
             items: [
               const DropdownMenuItem(value: '', child: Text('Не выбран (без звука)')),

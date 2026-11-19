@@ -272,10 +272,9 @@ class _ScenariosPageState extends State<ScenariosPage> {
                 physics: const NeverScrollableScrollPhysics(),
                 buildDefaultDragHandles: false,
                 itemCount: draft.steps.length,
-                onReorder: (oldIndex, newIndex) {
+                onReorderItem: (oldIndex, newIndex) {
                   _update((s) {
                     final list = [...s.steps];
-                    if (newIndex > oldIndex) newIndex -= 1;
                     final item = list.removeAt(oldIndex);
                     list.insert(newIndex, item);
                     return s.copyWith(steps: list);

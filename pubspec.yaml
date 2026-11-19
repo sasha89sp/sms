@@ -1,7 +1,7 @@
 name: huawei_modem_manager
 description: Windows desktop manager and automation tool for Huawei E173 USB modem.
 publish_to: 'none'
-version: 2.1.12+1
+version: 2.1.13+1
 
 environment:
   sdk: '>=3.5.0 <4.0.0'
