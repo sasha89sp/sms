@@ -564,7 +564,7 @@ class _StepEditorState extends State<_StepEditor> {
         SizedBox(
           width: 190,
           child: DropdownButtonFormField<StepType>(
-            value: widget.step.type,
+            initialValue: widget.step.type,
             isExpanded: true,
             decoration: const InputDecoration(labelText: 'Тип шага'),
             items: [
@@ -1113,7 +1113,7 @@ class _ActionRowState extends State<_ActionRow> {
         SizedBox(
           width: 150,
           child: DropdownButtonFormField<bool>(
-            value: action.isPhrase,
+            initialValue: action.isPhrase,
             isExpanded: true,
             decoration: const InputDecoration(isDense: true),
             items: const [
@@ -1135,7 +1135,7 @@ class _ActionRowState extends State<_ActionRow> {
         Expanded(
           child: action.isPhrase
               ? DropdownButtonFormField<String>(
-                  value: phraseValue,
+                  initialValue: phraseValue,
                   isExpanded: true,
                   hint: Text(widget.phrases.isEmpty ? 'Нет записанных фраз' : 'Выберите фразу'),
                   decoration: const InputDecoration(isDense: true),

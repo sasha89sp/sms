@@ -361,7 +361,16 @@ class AppController extends ChangeNotifier {
     }
   }
 
+  bool get _hasSimInserted => modemInfo.simStatus != 'SIM не обнаружена';
+
   Future<void> _afterConnect(ModemInfo info) async {
+    if (info.simStatus == 'SIM не обнаружена') {
+      simId = '';
+      simPhone = '';
+      connectionMessage = 'Подключён ${info.port} · SIM не обнаружена';
+      _log('WARN', 'SIM-карта не обнаружена, фоновые запросы к SIM/сети отключены');
+      return;
+    }
     try {
       simId = await modem.readSimId();
     } catch (_) {
@@ -418,24 +427,34 @@ class AppController extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool windowHidden = false;
+
+  void setWindowHidden(bool hidden) {
+    if (windowHidden == hidden) return;
+    windowHidden = hidden;
+  }
+
   void _startTimers() {
     _slowTimer?.cancel();
     _fastTimer?.cancel();
-    _slowTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+    _slowTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       if (_disposed || _slowBusy) return;
       unawaited(_slowTick());
     });
-    _fastTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+    _fastTimer = Timer.periodic(const Duration(seconds: 2), (_) {
       if (_disposed || _fastBusy) return;
       unawaited(_fastTick());
     });
   }
 
-  /// Быстрый опрос (1 с): наличие порта, звонки, уведомления о SMS.
+  /// Быстрый опрос (2 с): наличие порта, звонки, уведомления о SMS.
   Future<void> _fastTick() async {
     _fastBusy = true;
     try {
       if (!isConnected) return;
+      if (windowHidden && !isInCall && !isRunning && !isBatchRunning && !settings.smsAutoReceive) {
+        return;
+      }
       if (!modem.isPortPresent()) {
         _handleUnplug();
         return;
@@ -458,7 +477,7 @@ class AppController extends ChangeNotifier {
         return;
       }
 
-      if (settings.smsAutoReceive && !isSyncingSms) {
+      if (settings.smsAutoReceive && !isSyncingSms && _hasSimInserted) {
         final hint = modem.takeSmsHint();
         final now = DateTime.now();
         final due = settings.smsPollSeconds > 0 &&
@@ -477,7 +496,7 @@ class AppController extends ChangeNotifier {
     }
   }
 
-  /// Медленный опрос (3 с): подключение, статус, автозапуск сценария.
+  /// Медленный опрос (5 с): подключение, статус, автозапуск сценария.
   Future<void> _slowTick() async {
     _slowBusy = true;
     try {
@@ -488,17 +507,35 @@ class AppController extends ChangeNotifier {
         await _tryAutoConnect();
         return;
       }
-      final registered = modemInfo.registration == 'Зарегистрирован в сети';
-      final now = DateTime.now();
-      if (!registered ||
-          _lastStatusUpdate == null ||
-          now.difference(_lastStatusUpdate!) >= const Duration(seconds: 15)) {
-        _lastStatusUpdate = now;
-        modemInfo = await modem.readModemInfo();
-        connectionMessage = 'Подключён ${modemInfo.port}';
-        notifyListeners();
+      if (windowHidden && !settings.smsAutoReceive) {
+        return;
       }
-      _maybeAutoRun();
+      final now = DateTime.now();
+      final noSim = !_hasSimInserted;
+      final registered = modemInfo.registration == 'Зарегистрирован в сети';
+      final statusInterval = noSim
+          ? const Duration(seconds: 60)
+          : (windowHidden ? const Duration(seconds: 60) : const Duration(seconds: 25));
+      if ((noSim ? _lastStatusUpdate == null : !registered || _lastStatusUpdate == null) ||
+          now.difference(_lastStatusUpdate!) >= statusInterval) {
+        _lastStatusUpdate = now;
+        final updated = await modem.readModemInfo();
+        final nextMsg = updated.simStatus == 'SIM не обнаружена'
+            ? 'Подключён ${updated.port} · SIM не обнаружена'
+            : 'Подключён ${updated.port}';
+        final changed = updated.operatorName != modemInfo.operatorName ||
+            updated.registration != modemInfo.registration ||
+            updated.signalPercent != modemInfo.signalPercent ||
+            updated.signalDbm != modemInfo.signalDbm ||
+            updated.simStatus != modemInfo.simStatus ||
+            connectionMessage != nextMsg;
+        modemInfo = updated;
+        connectionMessage = nextMsg;
+        if (changed) notifyListeners();
+      }
+      if (_hasSimInserted) {
+        _maybeAutoRun();
+      }
     } catch (error) {
       if (!isConnected) return;
       connectionMessage = 'Связь с модемом потеряна: $error';

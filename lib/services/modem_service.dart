@@ -605,7 +605,7 @@ class ModemService {
         ? '+${trimmedNumber.substring(1).replaceAll(RegExp(r'\D'), '')}'
         : trimmedNumber.replaceAll(RegExp(r'\D'), '');
     final typeOfAddress = safeNumber.startsWith('+') ? 145 : 129;
-    final safeName = name.replaceAll('\"', '').replaceAll('\r', ' ').replaceAll('\n', ' ');
+    final safeName = name.replaceAll('"', '').replaceAll('\r', ' ').replaceAll('\n', ' ');
     return _exclusive(() async {
       await _writeAndRead('AT+CPBS="SM"');
       return _writeAndRead('AT+CPBW=$index,\"$safeNumber\",$typeOfAddress,\"$safeName\"',

@@ -69,7 +69,7 @@ class _SettingsPageState extends State<SettingsPage> {
           const Text('Подключение к модему', style: TextStyle(fontWeight: FontWeight.w700)),
           const SizedBox(height: 11),
           DropdownButtonFormField<String>(
-            value: _port.isEmpty ? '' : _port,
+            initialValue: _port.isEmpty ? '' : _port,
             decoration: const InputDecoration(labelText: 'Предпочтительный COM-порт', prefixIcon: Icon(Icons.usb)),
             items: [
               const DropdownMenuItem(value: '', child: Text('Автоматический поиск')),
@@ -84,7 +84,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           const SizedBox(height: 10),
           DropdownButtonFormField<int>(
-            value: _baud,
+            initialValue: _baud,
             decoration: const InputDecoration(labelText: 'Скорость порта (baud)'),
             items: const [9600, 19200, 38400, 57600, 115200].map((v) => DropdownMenuItem(value: v, child: Text('$v'))).toList(),
             onChanged: (value) => setState(() => _baud = value ?? 115200),
@@ -103,7 +103,7 @@ class _SettingsPageState extends State<SettingsPage> {
           const Text('USSD, сеть и повторы', style: TextStyle(fontWeight: FontWeight.w700)),
           const SizedBox(height: 10),
           DropdownButtonFormField<int>(
-            value: _dcs,
+            initialValue: _dcs,
             decoration: const InputDecoration(labelText: 'DCS для USSD'),
             items: const [15, 72]
                 .map((v) => DropdownMenuItem(value: v, child: Text(v == 72 ? '72 — UCS-2 (часто для кириллицы)' : '15 — стандартная таблица')))

@@ -234,7 +234,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   children: [
                     Expanded(
                       child: DropdownButtonFormField<String>(
-                        value: c.availablePorts.any((port) => port.name == _selectedPort) ? _selectedPort : null,
+                        initialValue: c.availablePorts.any((port) => port.name == _selectedPort) ? _selectedPort : null,
                         isExpanded: true,
                         decoration: const InputDecoration(
                           labelText: 'COM-порт (необязательно)',
@@ -403,7 +403,9 @@ class _ContactsPageState extends State<ContactsPage> {
     ));
     if (ok == true) {
       final slot = int.tryParse(indexCtrl.text) ?? 0;
+      if (!context.mounted) return;
       await _perform(context, () => c.writeContact(index: slot, number: numberCtrl.text.trim(), name: nameCtrl.text.trim()));
+      if (!context.mounted) return;
       await _perform(context, c.refreshContacts);
     }
     indexCtrl.dispose(); numberCtrl.dispose(); nameCtrl.dispose();
@@ -571,8 +573,5 @@ class _AtTerminalPageState extends State<AtTerminalPage> {
   }
 }
 
-const int UCS2DcsValue = 72;
+const int ucs2DcsValue = 72;
 
-void _showInfo(BuildContext context, String title, String message) {
-  showDialog<void>(context: context, builder: (context) => AlertDialog(title: Text(title), content: Text(message), actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Закрыть'))]));
-}
